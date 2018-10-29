@@ -1,0 +1,7 @@
+applications:
+- path: .
+  memory: 256M
+  instances: 1
+  route: z2b.mybluemix.net
+  name: z2b
+  disk_quota: 1024M
