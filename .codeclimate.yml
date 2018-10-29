@@ -6,5 +6,5 @@ exclude_patterns:
 - "Chapter13/cs-offerings/"
 - "Chapter13/Documentation/"
 - "Chapter13/startup/"
-- "Chapter13/fonts/"
-- "Chapter13/js-utils/"
+- "Chapter13/HTML/fonts/"
+- "Chapter13/HTML/js-utils/"
