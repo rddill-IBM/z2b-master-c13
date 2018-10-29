@@ -1,0 +1,9 @@
+exclude_patterns:
+  - "docs/"
+  - "Composer_Docs/"
+  - "assets/"
+  - "Chapter13/cs-offerings/"
+  - "Chapter13/Documentation/"
+  - "Chapter13/startup/"
+  - "Chapter13/fonts/"
+  - "Chapter13/js-utils/"
