@@ -24,15 +24,15 @@ let wsSocket;
 function singleUX ()
 {
     let toLoad = 'singleUX.html';
-    if ((typeof(buyers) === 'undefined') || (buyers === null) || (buyers.length === 0))
+    if ((typeof(buyerJSON.array) === 'undefined') || (buyerJSON.array === null) || (buyerJSON.array.length === 0))
     { $.when($.get(toLoad), deferredMemberLoad()).done(function (_page, _res)
         {
         $('#body').empty();
         $('#body').append(_page);
-        loadBuyerUX();
-        loadSellerUX();
-        loadProviderUX();
-        loadShipperUX();
+        loadMemberUX(buyerJSON);
+        loadMemberUX(sellerJSON);
+        loadMemberUX(providerJSON);
+        loadMemberUX(shipperJSON);
         // Initialize Registration for all Z2B Business Events
         goEventInitialize();
     });
@@ -42,10 +42,10 @@ function singleUX ()
         {
             $('#body').empty();
             $('#body').append(_page);
-            loadBuyerUX();
-            loadSellerUX();
-            loadProviderUX();
-            loadShipperUX();
+            loadMemberUX(buyerJSON);
+            loadMemberUX(sellerJSON);
+            loadMemberUX(providerJSON);
+            loadMemberUX(shipperJSON);
             // Initialize Registration for all Z2B Business Events
             goEventInitialize();
         });
@@ -57,6 +57,8 @@ function singleUX ()
  */
 function memberLoad ()
 {
+    let methodName = 'memberLoad';
+    console.log(methodName+' entered.');
     let options = {};
     options.registry = 'Seller';
     let options2 = {};
@@ -68,14 +70,14 @@ function memberLoad ()
     $.when($.post('/composer/admin/getMembers', options), $.post('/composer/admin/getMembers', options2),
         $.post('/composer/admin/getMembers', options3), $.post('/composer/admin/getMembers', options4)).done(function (_sellers, _buyers, _providers, _shippers)
         {
-        buyers = dropDummy(_buyers[0].members);
-        sellers = dropDummy(_sellers[0].members);
-        providers = dropDummy(_providers[0].members);
-        shippers = dropDummy(_shippers[0].members);
-        s_string = _getMembers(sellers);
-        p_string = _getMembers(providers);
-        sh_string = _getMembers(shippers);
-
+        buyerJSON.array = dropDummy(_buyers[0].members);
+        sellerJSON.array = dropDummy(_sellers[0].members);
+        providerJSON.array = dropDummy(_providers[0].members);
+        shipperJSON.array = dropDummy(_shippers[0].members);
+        sellerJSON.options= _getMembers(sellerJSON.array);
+        providerJSON.options = _getMembers(providerJSON.array);
+        shipperJSON.options = _getMembers(shipperJSON.array);
+        buyerJSON.options = _getMembers(buyerJSON.array);
         });
 }
 /**
@@ -94,6 +96,8 @@ function dropDummy(_in)
  */
 function deferredMemberLoad()
 {
+    let methodName = 'deferredMemberLoad';
+    console.log(methodName+' entered.');
     let d_prompts = $.Deferred();
     let options = {};
     options.registry = 'Seller';
@@ -106,13 +110,13 @@ function deferredMemberLoad()
     $.when($.post('/composer/admin/getMembers', options), $.post('/composer/admin/getMembers', options2),
         $.post('/composer/admin/getMembers', options3), $.post('/composer/admin/getMembers', options4)).done(function (_sellers, _buyers, _providers, _shippers)
         {
-            buyers = dropDummy(_buyers[0].members);
-            sellers = dropDummy(_sellers[0].members);
-            providers = dropDummy(_providers[0].members);
-            shippers = dropDummy(_shippers[0].members);
-            s_string = _getMembers(sellers);
-            p_string = _getMembers(providers);
-            sh_string = _getMembers(shippers);
+            buyerJSON.array = dropDummy(_buyers[0].members);
+            sellerJSON.array = dropDummy(_sellers[0].members);
+            providerJSON.array = dropDummy(_providers[0].members);
+            shipperJSON.array = dropDummy(_shippers[0].members);
+            sellerJSON.options= _getMembers(sellerJSON.array);
+            providerJSON.options = _getMembers(providerJSON.array);
+            shipperJSON.options = _getMembers(shipperJSON.array);
             d_prompts.resolve();
         }).fail(d_prompts.reject);
     return d_prompts.promise();
@@ -145,27 +149,27 @@ function goEventInitialize()
  */
 function addNotification(_event, _id, _orderID)
 {
-    let method = 'addNotification';
-    console.log(method+' _event'+_event+' id: '+_id+' orderID: '+_orderID);
+    let methodName = 'addNotification';
+    console.log(methodName+' _event'+_event+' id: '+_id+' orderID: '+_orderID);
     let type = getSubscriber(_id);
     if (type === 'none') {return;}
     switch(type)
     {
     case 'Buyer':
-        b_alerts.push({'event': _event, 'order': _orderID});
-        toggleAlert(b_notify, b_alerts, b_count);
+        buyerJSON.alerts.push({'event': _event, 'order': _orderID});
+        toggleAlert('#'+buyerJSON.notification, buyerJSON.alerts, '#'+buyerJSON.counter);
         break;
     case 'Seller':
-        s_alerts.push({'event': _event, 'order': _orderID});
-        toggleAlert(s_notify, s_alerts, s_count);
-        break;
+        sellerJSON.alerts.push({'event': _event, 'order': _orderID});
+        toggleAlert('#'+sellerJSON.notification, sellerJSON.alerts, '#'+sellerJSON.counter);
+    break;
     case 'Provider':
-        p_alerts.push({'event': _event, 'order': _orderID});
-        toggleAlert(p_notify, p_alerts, p_count);
+        providerJSON.alerts.push({'event': _event, 'order': _orderID});
+        toggleAlert('#'+providerJSON.notification, providerJSON.alerts, '#'+providerJSON.counter);
         break;
     case 'Shipper':
-        sh_alerts.push({'event': _event, 'order': _orderID});
-        toggleAlert(sh_notify, sh_alerts, sh_count);
+        shipperJSON.alerts.push({'event': _event, 'order': _orderID});
+        toggleAlert('#'+shipperJSON.notification, shipperJSON.alerts, '#'+shipperJSON.counter);
         break;
     case 'FinanceCo':
         f_alerts.push({'event': _event, 'order': _orderID});

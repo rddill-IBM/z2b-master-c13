@@ -248,7 +248,10 @@ exports.orderAction = function (req, res, next) {
                         svc.loadTransaction(req.app.locals, updateOrder, req.body.orderNo, businessNetworkConnection);
                     }
                     else
-                    {console.log(req.body.orderNo+' submitTransaction to update status to '+req.body.action+' failed with text: ',error.message);}
+                    {
+                        console.log(req.body.orderNo+' submitTransaction to update status to '+req.body.action+' failed with text: ',error.message);
+                        res.send({'result': req.body.orderNo+' submitTransaction to update status to '+req.body.action+' failed with text: '+error.message});
+                    }
                 });
 
             })

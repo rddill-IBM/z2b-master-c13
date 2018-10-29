@@ -1,1 +1,1 @@
-{"type":"hlfv1","name":"hlfv1","orderers":[{"url":"grpc://169.46.111.109:31010"}],"ca":{"url":"http://169.46.111.109:30054","name":"CA1"},"peers":[{"requestURL":"grpc://169.46.111.109:30110","eventURL":"grpc://169.46.111.109:30111"}],"channel":"channel1","mspID":"Org1MSP","timeout":300}
+{"name":"hlfv1","type":"hlfv1","orderers":[{"url":"grpc://localhost:7050"}],"ca":{"url":"http://localhost:7054","name":"ca.org1.example.com"},"peers":[{"requestURL":"grpc://localhost:7051","eventURL":"grpc://localhost:7053"}],"channel":"composerchannel","mspID":"Org1MSP","timeout":300}

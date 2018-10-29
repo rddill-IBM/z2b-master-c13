@@ -332,3 +332,76 @@ function accToggle(_parent, _body, _header)
         $(parent).removeClass('off'); $(parent).addClass('on');
     }
 }
+
+function loadMemberUX(_member)
+{
+    let methodName = 'loadMemberUX';
+    let toLoad = _member.pageToLoad;
+    if (buyers.length === 0)
+    { $.when($.get(toLoad)).done(function (page, res)
+      {setupMember(page, _member);});
+    }
+    else{
+        $.when($.get(toLoad)).done(function (page)
+        {setupMember(page, _member);});
+    }
+
+}
+/**
+ * 
+ * @param {*} _page 
+ * @param {*} _member 
+ *  * json object: 
+ * { 
+ *  pageToLoad: 'provider.html',
+ *  body: 'providerbody',
+ *  notification: 'provider_notify',
+ *  orderDiv: 'providerOrderDiv'
+ *  clear: 'provider_clear',
+ *  list: 'providerOrderStatus',
+ *  pageID: 'provider',
+ *  memberBody: 'provider',
+ *  company: 'providerCompany',
+ *  subscribe: 'Provider',
+ *  messages: 'provider_messages,
+ *  array: providers,
+ *  alerts: new Array(),
+ *  options: p_string,
+ *  listFunction: listProviderOrders
+ * }
+ */
+function setupMember(_page, _member)
+{
+    let methodName = 'setupMember';
+    console.log(methodName+' entered, _member.array = ', _member.array);
+    console.log(methodName+' entered, _member.options = ', _member.options);
+    console.log(methodName+' entered, _member.alerts = ', _member.alerts);
+    $('#'+_member.body).empty();
+    $('#'+_member.body).append(_page);
+    if (_member.alerts.length === 0)
+    {$('#'+_member.notification).removeClass('on'); $('#'+_member.notification).addClass('off'); }
+    else {$('#'+_member.notification).removeClass('off'); $('#'+_member.notification).addClass('on'); }
+    updatePage(_member.pageID);
+    let _clear = $('#'+_member.clear);
+    let _list = $('#'+_member.list);
+    let _orderDiv = $('#'+_member.orderDiv);
+    if (_member.clear === 'newOrder')
+    {_clear.on('click', function(){_member.clearAction();});}
+    else
+    {_clear.on('click', function(){$('#'+_member.orderDiv).empty();});}
+    _list.on('click', function(){_member.listFunction();});
+    $('#'+_member.names).empty();
+    $('#'+_member.names).append(_member.options);
+    $('#'+_member.company).empty();
+    $('#'+_member.company).append(_member.array[0].companyName);
+    p_id = _member.array[0].id;
+    z2bSubscribe(_member.subscribe, p_id);
+    // create a function to execute when the user selects a different provider
+    $('#'+_member.memberBody).on('change', function() {
+        $('#'+_member.comapny).empty(); _orderDiv.empty(); $('#'+_member.messages).empty();
+        $('#'+_member.comapny).append(findMember($('#'+_member.memberBody).find(':selected').val(),_member.array).companyName);
+        z2bUnSubscribe(p_id);
+        p_id = findMember($('#'+_member.pageID).find(':selected').text(),_member.array).id;
+        z2bSubscribe(_member.subscribe, p_id);
+    });
+}

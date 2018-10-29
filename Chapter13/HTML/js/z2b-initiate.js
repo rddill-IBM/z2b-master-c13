@@ -24,10 +24,9 @@ let host_address = window.location.host;
 
 let buyers = new Array();
 let sellers= new Array();
-let providers= new Array();
 let shippers= new Array();
 
-let s_string, p_string, sh_string;
+let sh_string;
 
 let orderStatus = {
     Created: {code: 1, text: 'Order Created'},

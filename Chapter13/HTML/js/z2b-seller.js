@@ -15,62 +15,28 @@
 // z2c-seller.js
 
 'use strict';
-let sellerOrderDiv = 'sellerOrderDiv';
-let s_alerts = [];
-let s_notify = '#seller_notify';
-let s_count = '#seller_count';
 let s_id;
-/**
- * load the administration Seller Experience
- */
-function loadSellerUX ()
-{
-    let toLoad = 'seller.html';
-    if (buyers.length === 0) 
-    { $.when($.get(toLoad), deferredMemberLoad()).done(function (page, res)
-    {setupSeller(page[0]);});
-    }
-    else{
-        $.when($.get(toLoad)).done(function (page)
-        {setupSeller(page);});
-    }
-}
-
-/**
- * load the administration User Experience
- * @param {String} page - page to load
- */
-function setupSeller(page)
-{
-    $('#sellerbody').empty();
-    $('#sellerbody').append(page);
-    if (s_alerts.length == 0) 
-    {$(s_notify).removeClass('on'); $(s_notify).addClass('off'); }
-    else {$(s_notify).removeClass('off'); $(s_notify).addClass('on'); }
-    updatePage('seller');
-    let _clear = $('#seller_clear');
-    let _list = $('#sellerOrderStatus');
-    let _orderDiv = $('#'+sellerOrderDiv);
-    _clear.on('click', function(){_orderDiv.empty();});
-    //
-    // this section changes from the previous chapter, buyer changing to seller
-    //
-    _list.on('click', function(){listSellerOrders();});
-    $('#seller').empty();
-    $('#seller').append(s_string);
-    $('#sellerCompany').empty();
-    $('#sellerCompany').append(sellers[0].companyName);
-    s_id = sellers[0].id;
-    z2bSubscribe('Seller', s_id);
-    // create a function to execute when the user selects a different provider
-      $('#seller').on('change', function() {
-        $('#sellerCompany').empty(); _orderDiv.empty(); $('#seller_messages').empty();
-        $('#sellerCompany').append(findMember($('#seller').find(':selected').val(),sellers).companyName);
-        z2bUnSubscribe(s_id);
-        s_id = findMember($('#seller').find(':selected').text(),sellers).id;
-        z2bSubscribe('Seller', s_id);
-    });
-}
+let sellerJSON = {
+    pageToLoad: 'seller.html',
+    body: 'sellerbody',
+    notification: 'seller_notify',
+    orderDiv: 'sellerOrderDiv',
+    clear: 'seller_clear',
+    clearAction: $('#sellerOrderDiv').empty,
+    list: 'sellerOrderStatus',
+    pageID: 'seller',
+    memberBody: 'seller',
+    names: 'sellerNames',
+    company: 'sellerCompany',
+    subscribe: 'Seller',
+    messages: 'seller_messages',
+    counter: 'seller_count',
+    array: {},
+    alerts: new Array(),
+    options: {},
+    listFunction: listSellerOrders
+    };
+       
 /**
  * lists all orders for the selected seller
  */
@@ -80,7 +46,7 @@ function listSellerOrders()
     //
     // seller instead of buyer
     //
-    options.id= $('#seller').find(':selected').val();
+    options.id= $('#'+sellerJSON.names).find(':selected').val();
     options.userID = options.id;
     $.when($.post('/composer/client/getMyOrders', options)).done(function(_results)
     {
@@ -97,6 +63,7 @@ function listSellerOrders()
  */
 function formatSellerOrders(_target, _orders)
 {
+    let methodName = 'formatSellerOrders';
     _target.empty();
     let _str = ''; let _date = '';
     for (let each in _orders)
@@ -159,7 +126,7 @@ function formatSellerOrders(_target, _orders)
         _action += '</select>';
         if (_idx > 0) {_str += '<div class="spacer"></div>';}
         _str += '<table class="wide"><tr><th>'+textPrompts.orderProcess.orderno+'</th><th>'+textPrompts.orderProcess.status+'</th><th class="right">'+textPrompts.orderProcess.total+'</th><th colspan="3" class="right message">'+textPrompts.orderProcess.buyer+findMember(_arr[_idx].buyer.split('#')[1],buyers).companyName+'</th></tr>';
-        _str += '<tr><th id ="s_order'+_idx+'" width="20%">'+_arr[_idx].id+'</th><th width="50%" id="s_status'+_idx+'">'+JSON.parse(_arr[_idx].status).text+': '+_date+'</th><th class="right">$'+_arr[_idx].amount+'.00</th>'+_action+'<br/><select id="providers'+_idx+'">'+p_string+'</th>'+_button+'</tr></table>';
+        _str += '<tr><th id ="s_order'+_idx+'" width="20%">'+_arr[_idx].id+'</th><th width="50%" id="s_status'+_idx+'">'+JSON.parse(_arr[_idx].status).text+': '+_date+'</th><th class="right">$'+_arr[_idx].amount+'.00</th>'+_action+'<br/><select id="providers'+_idx+'">'+providerJSON.options+'</th>'+_button+'</tr></table>';
         _str+= '<table class="wide"><tr align="center"><th>'+textPrompts.orderProcess.itemno+'</th><th>'+textPrompts.orderProcess.description+'</th><th>'+textPrompts.orderProcess.qty+'</th><th>'+textPrompts.orderProcess.price+'</th></tr>'
         for (let every in _arr[_idx].items)
         {(function(_idx2, _arr2)
@@ -179,16 +146,16 @@ function formatSellerOrders(_target, _orders)
           let options = {};
           options.action = $('#s_action'+_idx).find(':selected').text();
           options.orderNo = $('#s_order'+_idx).text();
-          options.participant = $('#seller').val();
+          options.participant = $('#'+sellerJSON.names).val();
           options.provider = $('#providers'+_idx).find(':selected').val();
           if ((options.action === 'Resolve') || (options.action === 'Refund')) {options.reason = $('#s_reason'+_idx).val();}
-          $('#seller_messages').prepend(formatMessage(options.action+textPrompts.orderProcess.processing_msg.format(options.action, options.orderNo)+options.orderNo));
+          $('#'+sellerJSON.messages).prepend(formatMessage(options.action+textPrompts.orderProcess.processing_msg.format(options.action, options.orderNo)+options.orderNo));
           $.when($.post('/composer/client/orderAction', options)).done(function (_results)
-          { $('#seller_messages').prepend(formatMessage(_results.result)); });
+          { $('#'+sellerJSON.messages).prepend(formatMessage(_results.result)); });
       });
-        if (notifyMe(s_alerts, _arr[_idx].id)) {$('#s_status'+_idx).addClass('highlight'); }
+        if (notifyMe(sellerJSON.alerts, _arr[_idx].id)) {$('#s_status'+_idx).addClass('highlight'); }
     })(each, _orders);
     }
-    s_alerts = new Array();
-    toggleAlert($('#seller_notify'), s_alerts, s_alerts.length);
+    sellerJSON.alerts = new Array();
+    toggleAlert($('#'+sellerJSON.notification), sellerJSON.alerts, sellerJSON.counter);
 }

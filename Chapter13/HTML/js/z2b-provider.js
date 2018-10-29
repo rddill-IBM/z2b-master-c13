@@ -16,67 +16,37 @@
 
 'use strict';
 
-let providerOrderDiv = 'providerOrderDiv';
-let p_alerts = [];
-let p_notify = '#provider_notify';
-let p_count = '#provider_count';
 let p_id;
-
-/**
- * load the Provider User Experience
- */
-function loadProviderUX ()
-{
-    let toLoad = 'provider.html';
-    if (buyers.length === 0)
-    { $.when($.get(toLoad), deferredMemberLoad()).done(function (page, res)
-      {setupProvider(page[0]);});
-    }
-    else{
-        $.when($.get(toLoad)).done(function (page)
-        {setupProvider(page);});
-    }
-}
-
-/**
- * load the Provider User Experience
- * @param {String} page - the name of the page to load
- */
-function setupProvider(page)
-  {
-    $('#providerbody').empty();
-    $('#providerbody').append(page);
-    if (p_alerts.length === 0)
-    {$(p_notify).removeClass('on'); $(p_notify).addClass('off'); }
-    else {$(p_notify).removeClass('off'); $(p_notify).addClass('on'); }
-    updatePage('provider');
-    let _clear = $('#provider_clear');
-    let _list = $('#providerOrderStatus');
-    let _orderDiv = $('#'+providerOrderDiv);
-    _clear.on('click', function(){_orderDiv.empty();});
-    _list.on('click', function(){listProviderOrders();});
-    $('#provider').empty();
-    $('#provider').append(p_string);
-    $('#providerCompany').empty();
-    $('#providerCompany').append(providers[0].companyName);
-    p_id = providers[0].id;
-    z2bSubscribe('Provider', p_id);
-    // create a function to execute when the user selects a different provider
-    $('#provider').on('change', function() {
-        $('#providerCompany').empty(); _orderDiv.empty(); $('#provider_messages').empty();
-        $('#providerCompany').append(findMember($('#provider').find(':selected').val(),providers).companyName);
-        z2bUnSubscribe(p_id);
-        p_id = findMember($('#provider').find(':selected').text(),providers).id;
-        z2bSubscribe('Provider', p_id);
-    });
-}
+let providerJSON = {
+    pageToLoad: 'provider.html',
+    body: 'providerbody',
+    notification: 'provider_notify',
+    orderDiv: 'providerOrderDiv',
+    clear: 'provider_clear',
+    clearAction: $('#providerOrderDiv').empty,
+    list: 'providerOrderStatus',
+    pageID: 'provider',
+    memberBody: 'provider',
+    names: 'providerNames',
+    company: 'providerCompany',
+    subscribe: 'Provider',
+    messages: 'provider_messages',
+    counter: 'provider_count',
+    array: {},
+    alerts: new Array(),
+    options: {},
+    listFunction: listProviderOrders
+    };
+       
 /**
  * lists all orders for the selected Provider
  */
 function listProviderOrders()
 {
+    let methodName = 'listProviderOrders';
+    console.log(methodName+' entered, providers = ', providerJSON.array);
     let options = {};
-    options.id = $('#provider').find(':selected').val();
+    options.id = $('#'+providerJSON.names).find(':selected').val();
     options.userID = options.id;
     $.when($.post('/composer/client/getMyOrders', options)).done(function(_results)
     {
@@ -96,6 +66,8 @@ function listProviderOrders()
  */
 function formatProviderOrders(_target, _orders)
 {
+    let methodName = 'formatProviderOrders';
+    console.log(methodName+' entered. providerJSON.alerts is: ', providerJSON.alerts);
     _target.empty();
     let _str = ''; let _date = ''; let b_string;
     for (let each in _orders)
@@ -154,8 +126,8 @@ function formatProviderOrders(_target, _orders)
         let _button = '<th><button id="p_btn_'+_idx+'">'+textPrompts.orderProcess.ex_button+'</button></th>'
         _action += '</select>';
         if (_idx > 0) {_str += '<div class="spacer"></div>';}
-        _str += '<table class="wide"><tr><th>'+textPrompts.orderProcess.orderno+'</th><th>'+textPrompts.orderProcess.status+'</th><th class="right">'+textPrompts.orderProcess.total+'</th><th colspan="3" class="right message">'+textPrompts.orderProcess.buyer+findMember(_arr[_idx].buyer.split('#')[1],buyers).companyName+'</th></tr>';
-        _str += '<tr><th id ="p_order'+_idx+'" width="20%">'+_arr[_idx].id+'</th><th width="50%" id="p_status'+_idx+'">'+JSON.parse(_arr[_idx].status).text+': '+_date+'</th><th class="right">$'+_arr[_idx].amount+'.00</th>'+_action+'<br/><select id="shippers'+_idx+'">'+sh_string+b_string+'</th>'+_button+'</tr></table>';
+        _str += '<table class="wide"><tr><th>'+textPrompts.orderProcess.orderno+'</th><th>'+textPrompts.orderProcess.status+'</th><th class="right">'+textPrompts.orderProcess.total+'</th><th colspan="3" class="right message">'+textPrompts.orderProcess.buyer+findMember(_arr[_idx].buyer.split('#')[1],buyerJSON.array).companyName+'</th></tr>';
+        _str += '<tr><th id ="p_order'+_idx+'" width="20%">'+_arr[_idx].id+'</th><th width="50%" id="p_status'+_idx+'">'+JSON.parse(_arr[_idx].status).text+': '+_date+'</th><th class="right">$'+_arr[_idx].amount+'.00</th>'+_action+'<br/><select id="shippers'+_idx+'">'+shipperJSON.options+b_string+'</th>'+_button+'</tr></table>';
         _str+= '<table class="wide"><tr align="center"><th>'+textPrompts.orderProcess.itemno+'</th><th>'+textPrompts.orderProcess.description+'</th><th>'+textPrompts.orderProcess.qty+'</th><th>'+textPrompts.orderProcess.price+'</th></tr>';
         for (let every in _arr[_idx].items)
         {(function(_idx2, _arr2)
@@ -174,19 +146,20 @@ function formatProviderOrders(_target, _orders)
             let options = {};
             options.action = $('#p_action'+_idx).find(':selected').text();
             options.orderNo = $('#p_order'+_idx).text();
-            options.participant = $('#provider').val();
+            options.participant = $('#'+providerJSON.names).val();
             options.shipper = $('#shippers'+_idx).find(':selected').val();
             if ((options.action === 'Resolve') || (options.action === 'Refund') || (options.action === 'BackOrder')) {options.reason = $('#p_reason'+_idx).val();}
             console.log(options);
-            $('#provider_messages').prepend(formatMessage(options.action+textPrompts.orderProcess.processing_msg.format(options.action, options.orderNo)+options.orderNo));
+            $('#'+providerJSON.messages).prepend(formatMessage(options.action+textPrompts.orderProcess.processing_msg.format(options.action, options.orderNo)+options.orderNo));
             $.when($.post('/composer/client/orderAction', options)).done(function (_results)
             { console.log(_results);
-                $('#provider_messages').prepend(formatMessage(_results.result));
+                $('#'+providerJSON.messages).prepend(formatMessage(_results.result));
             });
         });
             if (notifyMe(_arr[_idx].id)) {$('#p_status'+_idx).addClass('highlight'); }
         })(each, _orders);
     }
-    p_alerts = new Array();
-    toggleAlert($('#provider_notify'), p_alerts, p_alerts.length);
+    console.log(methodName+' entering toggleAlerts. providerJSON.alerts is: ', providerJSON.alerts);
+    providerJSON.alerts = new Array();
+    toggleAlert($('#'+providerJSON.notification), providerJSON.alerts, providerJSON.counter);
 }
