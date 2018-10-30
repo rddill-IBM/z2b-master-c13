@@ -39,7 +39,6 @@ var Z2B_Utility = {
         if (__iter >= 7) {return;}
     //    console.log(_string+' is a type of: '+typeof(_object));
         for (let prop in _object){
-            __iter = (typeof(_iter) === 'undefined') ? 0 : _iter;
             console.log(_string+'.'+prop+': \t'+(((typeof(_object[prop]) === 'object') || (typeof(_object[prop]) === 'function') || (prop === 'definitions') )  ? typeof(_object[prop]) : _object[prop]));
             if (typeof(_object[prop]) === 'object') {__iter++;  displayObjectValuesRecursive(_string+'.'+prop, _object[prop], __iter);}
         }

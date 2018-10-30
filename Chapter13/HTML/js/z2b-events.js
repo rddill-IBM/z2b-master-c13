@@ -258,30 +258,33 @@ function wsConnect()
     else { wsSocket = new WebSocket('wss://'+host_address); }
     wsSocket.onerror = function (error) {console.log('WebSocket error on wsSocket: ', error);};
     wsSocket.onopen = function () {wsSocket.send('connected to client');};
-    wsSocket.onmessage = function (message)
+    wsSocket.onmessage = function (message) { _blctr = parseSockeMessage(message, content, blockchain, _blctr); };
+}
+
+function parseSocketMessage(message, content, blockchain, _blctr)
+{
+    let incoming ; 
+    // console.log(method+ ' incoming is: '+incoming);
+    if ( message.data instanceof Object === false){incoming = JSON.parse(message.data);}
+    switch (incoming.type)
     {
-        let incoming ; 
-        // console.log(method+ ' incoming is: '+incoming);
-        if ( message.data instanceof Object === false){incoming = JSON.parse(message.data);}
-        switch (incoming.type)
+    case 'Message':
+        content.append(formatMessage(incoming.data));
+        break;
+    case 'Alert':
+        let event = JSON.parse(incoming.data);
+        addNotification(event.type, event.ID, event.orderID);
+        break;
+    case 'BlockChain':
+        _blctr ++;
+        if (incoming.data !== 'connected')
         {
-        case 'Message':
-            content.append(formatMessage(incoming.data));
-            break;
-        case 'Alert':
-            let event = JSON.parse(incoming.data);
-            addNotification(event.type, event.ID, event.orderID);
-            break;
-        case 'BlockChain':
-            _blctr ++;
-            if (incoming.data !== 'connected')
-            {
-                $(blockchain).append('<span class="block">block '+incoming.data.header.number+'<br/>Hash: '+incoming.data.header.data_hash+'</span>');
-                if (_blctr > 4) {let leftPos = $(blockchain).scrollLeft(); $(blockchain).animate({scrollLeft: leftPos + 300}, 250);}
-            }
-            break;
-        default:
-            console.log(methodName+' Can Not Process message type: ',incoming.type);
+            $(blockchain).append('<span class="block">block '+incoming.data.header.number+'<br/>Hash: '+incoming.data.header.data_hash+'</span>');
+            if (_blctr > 4) {let leftPos = $(blockchain).scrollLeft(); $(blockchain).animate({scrollLeft: leftPos + 300}, 250);}
         }
-    };
+        break;
+    default:
+        console.log(methodName+' Can Not Process message type: ',incoming.type);
+    }
+    return _blctr;
 }
