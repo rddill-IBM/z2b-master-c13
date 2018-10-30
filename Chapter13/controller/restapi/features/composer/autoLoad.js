@@ -83,24 +83,15 @@ exports.autoLoad = function(req, res, next) {
     svc.connectToDB(memberDB, req.headers.host)
     .then((_conn_res) => {
         // get the autoload file
-        let newFile = path.join(path.dirname(require.main.filename),'startup','memberList.json');
-        let startupFile = JSON.parse(fs.readFileSync(newFile));
+        let startupFile = JSON.parse(fs.readFileSync(path.join(path.dirname(require.main.filename),'startup','memberList.json')));
         // connect to the network
         let businessNetworkConnection;
         let factory; let participant;
-    //     svc.createMessageSocket();
-    //     socketAddr = svc.m_socketAddr;
         let adminConnection = new AdminConnection();
-        // connection prior to V0.15
-        //    adminConnection.connect(config.composer.connectionProfile, config.composer.adminID, config.composer.adminPW)
-        // connection in v0.15
         adminConnection.connect(config.composer.adminCard)
         .then(() => {
             // a businessNetworkConnection is required to add members
             businessNetworkConnection = new BusinessNetworkConnection();
-            // connection prior to V0.15
-            // return businessNetworkConnection.connect(config.composer.connectionProfile, config.composer.network, config.composer.adminID, config.composer.adminPW)
-            // connection in v0.15
             return businessNetworkConnection.connect(config.composer.adminCard)
             .then(() => {
                 // a factory is required to build the member object
@@ -109,9 +100,6 @@ exports.autoLoad = function(req, res, next) {
                 // first add the member to the network, then create an identity for
                 // them. This generates the memberList.txt file later used for
                 // retrieving member secrets.
-                console.log(methodName+' =========================== ');
-                console.log(methodName+' getting members from startupFile: '+startupFile.members.length);
-                console.log(methodName+' =========================== ');
                 for (let each in startupFile.members)
                     {(function(_idx, _arr)
                         {
@@ -122,10 +110,8 @@ exports.autoLoad = function(req, res, next) {
                         .then(function(participantRegistry){
                             return participantRegistry.get(_arr[_idx].id)
                             .then((_res) => {
-                                console.log(methodName+' =========================== ['+_idx+'] '+_arr[_idx].id);
                                 svc.getThisMember(req.app.locals, memberDB, _arr[_idx].id, req.headers.host)
                                 .then((_res) => {
-                                    // console.log(methodName+' svc.getThisMember('+_arr[_idx].id+') _res: ', _res);
                                     let member = JSON.parse(_res);
                                     let options = {};
                                     options.registry = member.type;
@@ -135,77 +121,48 @@ exports.autoLoad = function(req, res, next) {
                                     _meta.businessNetwork = config.composer.network;
                                     _meta.userName = member.id;
                                     _meta.enrollmentSecret = member.secret;
-                                    //console.log(methodName+' svc.getThisMember('+_arr[_idx].id+') _meta: ', _meta);
                                     let tempCard = new hlc_idCard(_meta, admin_connection);
                                     return adminConnection.importCard(member.id, tempCard)
                                     .then(() => {
                                         let currentMemberPath = path.join(basePath,member.id);
                                         fs.mkdirSync(currentMemberPath);
                                         for (let i=0; i<3; i++)
-                                        {(function(_idx)
-                                            {console.log(methodName+' getThisMember looping on ['+_idx+'] is: '+member[CLIENT_DATA+_idx].name);
-                                            let _path = path.join(basePath,member.id,member[CLIENT_DATA+_idx].name);
-                                            fs.writeFileSync(_path, member[CLIENT_DATA+_idx].file);
-                                            })(i)
-                                        }
+                                        {(function(_idx){fs.writeFileSync(path.join(basePath,member.id,member[CLIENT_DATA+_idx].name), member[CLIENT_DATA+_idx].file);})(i)}
                                     })
                                     .catch((error) => {console.log(methodName+' adminConnection.importCard for '+member.id+' failed with error: ', error);})
                                 })
-                                .catch((_error) => {
-                                    console.log(methodName+' error: ',_error);
-                                });
+                                .catch((_error) => {console.log(methodName+' error: ',_error);});
                             })
                             .catch((error) => {
                                 participant = factory.newResource(config.composer.NS, _arr[_idx].type, _arr[_idx].id);
                                 participant.companyName = _arr[_idx].companyName;
                                 participantRegistry.add(participant)
+                                .then(() => {svc.send(req.app.locals, 'Message', '['+_idx+'] '+_arr[_idx].companyName+' successfully added');})
                                 .then(() => {
-                                    console.log(methodName+' ['+_idx+'] '+_arr[_idx].companyName+' successfully added');
-                                    svc.send(req.app.locals, 'Message', '['+_idx+'] '+_arr[_idx].companyName+' successfully added');
-                                })
-                                .then(() => {
-                                    // an identity is required before a member can take action in the network.
-                                    // V0.14
-                                    // return businessNetworkConnection.issueIdentity(config.composer.NS+'.'+_arr[_idx].type+'#'+_arr[_idx].id, _arr[_idx].pw)
-                                    // V0.15
-                                    console.log(methodName+' issuing identity for: '+config.composer.NS+'.'+_arr[_idx].type+'#'+_arr[_idx].id);
                                     return businessNetworkConnection.issueIdentity(config.composer.NS+'.'+_arr[_idx].type+'#'+_arr[_idx].id, _arr[_idx].id)
                                     .then((result) => {
-                                        console.log(methodName+' _arr['+_idx+'].id: '+_arr[_idx].id);
-                                        console.log(methodName+' result.userID: '+result.userID);
                                         let _mem = _arr[_idx];
                                         _mem.secret = result.userSecret;
                                         _mem.userID = result.userID;
                                         memberTable.push(_mem);
-                                        //svc.saveToDB(memberDB, _mem, result.userID, req.headers.host);
-                                        //svc.saveMemberTable(memberTable);
                                         let _meta = {};
-                                        for (each in config.composer.metaData)
-                                        {(function(_idx, _obj) {_meta[_idx] = _obj[_idx]; })(each, config.composer.metaData); }
+                                        for (each in config.composer.metaData){(function(_idx, _obj) {_meta[_idx] = _obj[_idx]; })(each, config.composer.metaData); }
                                         _meta.businessNetwork = config.composer.network;
                                         _meta.userName = result.userID;
                                         _meta.enrollmentSecret = result.userSecret;
                                         let tempCard = new hlc_idCard(_meta, admin_connection);
                                         return adminConnection.importCard(result.userID, tempCard)
                                         .then ((_res) => {
-                                            if (_res) 
-                                            {console.log(methodName+' '+result.userID+' card updated');} 
-                                            else {console.log(methodName+' '+result.userID+' card imported');}
                                             let bnc = new BusinessNetworkConnection();
                                             return bnc.connect(_arr[_idx].id)
                                             .then(() => {
-                                                console.log(methodName+' businessNetworkConnection.connect() succeeded');
                                                 return bnc.ping()
                                                 .then((_msg) => {
-                                                    console.log(methodName+' businessNetworkConnection.ping() succeeded');
-                                                    // retrieve CLIENT_DATA info and preserve it
                                                     let currentMemberPath = path.join(basePath,result.userID);
                                                     let fileList = fs.readdirSync(currentMemberPath);
                                                     for (each in fileList)
                                                     {(function(_each, _files)
-                                                        {console.log(methodName+' issueIdentity looping on _files['+_each+'] is: '+_files[_each]);
-                                                        let _path = path.join(basePath,result.userID,_files[_each]);
-                                                        let _file=fs.readFileSync(_path, 'utf8');
+                                                        {let _file=fs.readFileSync(path.join(basePath,result.userID,_files[_each]), 'utf8');
                                                         _mem[CLIENT_DATA+_each]={'name': _files[_each], 'file': _file};})(each, fileList)
                                                     }
                                                     svc.saveToDB(memberDB, _mem, result.userID, req.headers.host);
@@ -214,15 +171,11 @@ exports.autoLoad = function(req, res, next) {
                                             })
                                             .catch((error) => { console.log(methodName+' businessNetworkConnection.connect() failed. error: ',error); bnc.disconnect(); });
                                         })
-                                        .catch((error) => {
-                                            console.error(methodName+' adminConnection.importCard failed. ',error.message);
-                                        });
+                                        .catch((error) => {console.error(methodName+' adminConnection.importCard failed. ',error.message);});
                                     })
-                                    .catch((error) => {
-                                        console.error(methodName+' create id for '+_arr[_idx].id+'failed. ',error.message);
-                                    });
+                                    .catch((error) => {console.error(methodName+' create id for '+_arr[_idx].id+'failed. ',error.message);});
                                 })
-                            .catch((error) => {console.log(methodName+' '+_arr[_idx].companyName+' add failed',error.message);});
+                                .catch((error) => {console.log(methodName+' '+_arr[_idx].companyName+' add failed',error.message);});
                             });
                         })
                     .catch((error) => {console.log(methodName+' error with getParticipantRegistry', error.message);});
