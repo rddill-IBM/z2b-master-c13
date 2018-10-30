@@ -35,7 +35,8 @@ let providerJSON = {
     array: {},
     alerts: new Array(),
     options: {},
-    listFunction: listProviderOrders
+    ml_text: 'p_no_order_msg',
+    list_cbfn: formatProviderOrders
     };
        
 /**
@@ -52,8 +53,8 @@ function listProviderOrders()
     {
         console.log(_results.result);
         console.log(_results.orders);
-        if (_results.orders.length < 1) {$('#providerOrderDiv').empty(); $('#providerOrderDiv').append(formatMessage(textPrompts.orderProcess.p_no_order_msg+options.id));}
-        else{formatProviderOrders($('#providerOrderDiv'), _results.orders);}
+        if (_results.orders.length < 1) {$('#'+providerJSON.orderDiv).empty(); $('#'+providerJSON.orderDiv).append(formatMessage(textPrompts.orderProcess[providerJSON.ml_text]+options.id));}
+        else{formatProviderOrders($('#'+providerJSON.orderDiv), _results.orders);}
     });
 }
 

@@ -34,26 +34,10 @@ let sellerJSON = {
     array: {},
     alerts: new Array(),
     options: {},
-    listFunction: listSellerOrders
+    ml_text: 's_no_order_msg',
+    list_cbfn: formatSellerOrders
     };
        
-/**
- * lists all orders for the selected seller
- */
-function listSellerOrders()
-{
-    let options = {};
-    //
-    // seller instead of buyer
-    //
-    options.id= $('#'+sellerJSON.names).find(':selected').val();
-    options.userID = options.id;
-    $.when($.post('/composer/client/getMyOrders', options)).done(function(_results)
-    {
-        if (_results.orders.length < 1) {$('#sellerOrderDiv').empty(); $('#sellerOrderDiv').append(formatMessage(textPrompts.orderProcess.s_no_order_msg+options.id));}
-        else{formatSellerOrders($('#sellerOrderDiv'), _results.orders);}
-    });
-}
 /**
  * used by the listOrders() function
  * formats the orders for a buyer. Orders to be formatted are provided in the _orders array
@@ -125,7 +109,7 @@ function formatSellerOrders(_target, _orders)
         let _button = '<th><button id="s_btn_'+_idx+'">'+textPrompts.orderProcess.ex_button+'</button></th>'
         _action += '</select>';
         if (_idx > 0) {_str += '<div class="spacer"></div>';}
-        _str += '<table class="wide"><tr><th>'+textPrompts.orderProcess.orderno+'</th><th>'+textPrompts.orderProcess.status+'</th><th class="right">'+textPrompts.orderProcess.total+'</th><th colspan="3" class="right message">'+textPrompts.orderProcess.buyer+findMember(_arr[_idx].buyer.split('#')[1],buyers).companyName+'</th></tr>';
+        _str += '<table class="wide"><tr><th>'+textPrompts.orderProcess.orderno+'</th><th>'+textPrompts.orderProcess.status+'</th><th class="right">'+textPrompts.orderProcess.total+'</th><th colspan="3" class="right message">'+textPrompts.orderProcess.buyer+findMember(_arr[_idx].buyer.split('#')[1],buyerJSON.array).companyName+'</th></tr>';
         _str += '<tr><th id ="s_order'+_idx+'" width="20%">'+_arr[_idx].id+'</th><th width="50%" id="s_status'+_idx+'">'+JSON.parse(_arr[_idx].status).text+': '+_date+'</th><th class="right">$'+_arr[_idx].amount+'.00</th>'+_action+'<br/><select id="providers'+_idx+'">'+providerJSON.options+'</th>'+_button+'</tr></table>';
         _str+= '<table class="wide"><tr align="center"><th>'+textPrompts.orderProcess.itemno+'</th><th>'+textPrompts.orderProcess.description+'</th><th>'+textPrompts.orderProcess.qty+'</th><th>'+textPrompts.orderProcess.price+'</th></tr>'
         for (let every in _arr[_idx].items)

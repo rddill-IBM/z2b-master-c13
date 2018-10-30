@@ -35,25 +35,10 @@ let shipperJSON = {
     array: {},
     alerts: new Array(),
     options: {},
-    listFunction: listShipperOrders
+    ml_text: 'sh_no_order_msg',
+    list_cbfn: formatShipperOrders
     };
 
-/**
- * lists all orders for the selected shipper
- */
-function listShipperOrders()
-{
-    let options = {};
-    options.id = $('#shipperNames').find(':selected').val();
-    options.userID = options.id;
-    $.when($.post('/composer/client/getMyOrders', options)).done(function(_results)
-    {
-        console.log(_results.result);
-        console.log(_results.orders);
-        if (_results.orders.length < 1) {$('#shipperOrderDiv').empty(); $('#shipperOrderDiv').append(formatMessage(textPrompts.orderProcess.sh_no_order_msg+options.id));}
-        else{formatShipperOrders($('#shipperOrderDiv'), _results.orders)}
-    });
-}
 /**
  * used by the listOrders() function
  * formats the orders for a shipper. Orders to be formatted are provided in the _orders array

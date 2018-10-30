@@ -20,7 +20,7 @@ let buyerJSON = {
     pageToLoad: 'buyer.html',
     body: 'buyerbody',
     notification: 'buyer_notify',
-    orderDiv: 'buyerOrderDiv',
+    orderDiv: 'orderDiv',
     clear: 'newOrder',
     clearAction: displayOrderForm,
     list: 'orderStatus',
@@ -34,7 +34,8 @@ let buyerJSON = {
     array: {},
     alerts: new Array(),
     options: {},
-    listFunction: listOrders
+    ml_text: 'b_no_order_msg',
+    list_cbfn: formatOrders
 };
 
 let _orderDiv='orderDiv';
@@ -124,33 +125,6 @@ function displayOrderForm()
         });
     });
 }
-/**
- * lists all orders for the selected buyer
- */
-function listOrders()
-{
-    let options = {};
-    // get the users email address
-    options.id = $('#'+buyerJSON.names).find(':selected').val();
-    // get their password from the server. This is clearly not something we would do in production, but enables us to demo more easily
-    // $.when($.post('/composer/admin/getSecret', options)).done(function(_mem)
-    // {
-    // get their orders
-    options.userID = options.id;
-    // options.userID = _mem.userID; options.secret = _mem.secret;
-    $.when($.post('/composer/client/getMyOrders', options)).done(function(_results)
-    {
-        if ((typeof(_results.orders) === 'undefined') || (_results.orders === null))
-        {console.log('error getting orders: ', _results);}
-        else
-        {// if they have no orders, then display a message to that effect
-            if (_results.orders.length < 1) {$('#orderDiv').empty(); $('#orderDiv').append(formatMessage(textPrompts.orderProcess.b_no_order_msg+options.id));}
-        // if they have orders, format and display the orders.
-            else{formatOrders($('#orderDiv'), _results.orders);}
-        }
-    });
-    // });
-}
 
 /**
  * used by the listOrders() function
@@ -237,7 +211,7 @@ function formatOrders(_target, _orders)
         let _button = '<th><button id="b_btn_'+_idx+'">'+textPrompts.orderProcess.ex_button+'</button></th>';
         _action += '</select>';
         if (_idx > 0) {_str += '<div class="spacer"></div>';}
-        _str += '<table class="wide"><tr><th>'+textPrompts.orderProcess.orderno+'</th><th>'+textPrompts.orderProcess.status+'</th><th class="right">'+textPrompts.orderProcess.total+'</th><th colspan="3" class="right message">'+textPrompts.orderProcess.seller+findMember(_arr[_idx].seller.split('#')[1],sellers).companyName+'</th></tr>';
+        _str += '<table class="wide"><tr><th>'+textPrompts.orderProcess.orderno+'</th><th>'+textPrompts.orderProcess.status+'</th><th class="right">'+textPrompts.orderProcess.total+'</th><th colspan="3" class="right message">'+textPrompts.orderProcess.seller+findMember(_arr[_idx].seller.split('#')[1],sellerJSON.array).companyName+'</th></tr>';
         _str += '<tr><th id ="b_order'+_idx+'" width="20%">'+_arr[_idx].id+'</th><th width="50%" id="b_status'+_idx+'">'+JSON.parse(_arr[_idx].status).text+': '+_date+'</th><th class="right">$'+_arr[_idx].amount+'.00</th>'+_action+r_string+_button+'</tr></table>';
         _str+= '<table class="wide"><tr align="center"><th>'+textPrompts.orderProcess.itemno+'</th><th>'+textPrompts.orderProcess.description+'</th><th>'+textPrompts.orderProcess.qty+'</th><th>'+textPrompts.orderProcess.price+'</th></tr>'
         for (let every in _arr[_idx].items)

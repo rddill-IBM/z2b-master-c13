@@ -389,7 +389,7 @@ function setupMember(_page, _member)
     {_clear.on('click', function(){_member.clearAction();});}
     else
     {_clear.on('click', function(){$('#'+_member.orderDiv).empty();});}
-    _list.on('click', function(){_member.listFunction();});
+    _list.on('click', function(){listOrders(_member);});
     $('#'+_member.names).empty();
     $('#'+_member.names).append(_member.options);
     $('#'+_member.company).empty();
@@ -403,5 +403,25 @@ function setupMember(_page, _member)
         z2bUnSubscribe(p_id);
         p_id = findMember($('#'+_member.pageID).find(':selected').text(),_member.array).id;
         z2bSubscribe(_member.subscribe, p_id);
+    });
+}
+
+/**
+ * lists all orders for the selected Provider
+ */
+function listOrders(_member)
+{
+    let methodName = 'listOrders';
+    console.log(methodName+' entered, providers = ', _member.array);
+    let options = {};
+    options.id = $('#'+_member.names).find(':selected').val();
+    options.userID = options.id;
+    $.when($.post('/composer/client/getMyOrders', options)).done(function(_results)
+    {
+        console.log(methodName+' _results.result: '+_results.result);
+        console.log(methodName+' _results.orders: ',_results.orders);
+        console.log(methodName+' _member: ',_member);
+        if (_results.orders.length < 1) {$('#'+_member.orderDiv).empty(); $('#'+_member.orderDiv).append(formatMessage(textPrompts.orderProcess[_member.ml_text]+options.id));}
+        else{_member.list_cbfn($('#'+_member.orderDiv), _results.orders);}
     });
 }
