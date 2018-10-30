@@ -258,7 +258,7 @@ function wsConnect()
     else { wsSocket = new WebSocket('wss://'+host_address); }
     wsSocket.onerror = function (error) {console.log('WebSocket error on wsSocket: ', error);};
     wsSocket.onopen = function () {wsSocket.send('connected to client');};
-    wsSocket.onmessage = function (message) { _blctr = parseSockeMessage(message, content, blockchain, _blctr); };
+    wsSocket.onmessage = function (message) { _blctr = parseSocketMessage(message, content, blockchain, _blctr); };
 }
 
 function parseSocketMessage(message, content, blockchain, _blctr)
