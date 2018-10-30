@@ -27,11 +27,11 @@ function loadAdminUX ()
 {
     let methodName = 'loadAdminUX';
     let toLoad = 'admin.html';
-    $.when($.get(toLoad)).done(function (page)
+    $.when($.get(toLoad), $.get('/setup/getLastRestart')).done(function (page, _res)
     {
-        replaceContent($('#sadmin-forms'), page);
+        replaceContent($('#sadmin-forms'), page[0]);
         updatePage('admin');
-        $.when($.get('/setup/getLastRestart')).done(function(_res) { $('#lastUpdate').append(_res.timeStamp); });
+        $('#lastUpdate').append(_res.timeStamp);
         listMemRegistries();
     });
 }
@@ -40,11 +40,9 @@ function loadAdminUX ()
  */
 function adminList()
 {
-    let _url = '/composer/admin/listAsAdmin';
-    $.when($.get(_url)).done(function (_connection)
-    { let _str = '<h3>Current Active Business Networks</h3><ul>';
-        for (let each in _connection)
-        {(function(_idx, _arr){_str += '<li>'+_arr[_idx]+'</li>';})(each, _connection);}
+    let _str = '<h3>Current Active Business Networks</h3><ul>';
+    $.when($.get('/composer/admin/listAsAdmin')).done(function (_connection)
+    {   for (let each in _connection) {(function(_idx, _arr){_str += '<li>'+_arr[_idx]+'</li>';})(each, _connection);}
         _str+='</ul>';
         replaceContent($('#sadmin-forms'), _str);
     });
@@ -55,8 +53,7 @@ function adminList()
  */
 function displayProfileForm ()
 {
-    let toLoad = 'createConnectionProfile.html';
-    $.when($.get(toLoad)).done(function (page)
+    $.when($.get('createConnectionProfile.html')).done(function (page)
     {
         replaceContent($('#sadmin-forms'), page);
         updatePage('createConnectionProfile');
@@ -96,7 +93,6 @@ function getConnectForm ()
  */
 function createConnection (_form)
 {
-    console.log(_form);
     $.when($.post('/composer/admin/createProfile', _form)).done(function(_results)
     {
         let _str = '';
@@ -113,14 +109,10 @@ function getProfiles()
 {
     $.when($.get('/composer/admin/getAllProfiles')).done(function (_profiles)
     {
-        let _str = '';
-        // list cert URL & cert path
-        _str +='<h3>network connection profile list request</h3>';
-        _str += '<ul>';
+        let _str = '<h3>network connection profile list request</h3><ul>';
         for (let each in _profiles) {_str += displayProfile(_profiles[each], each);}
         _str += '</ul>';
         replaceContent($('#sadmin-forms'), _str);
-
     });
 }
 
@@ -135,26 +127,24 @@ function listProfiles(_state)
     {
         replaceContent($('#admin-forms'),page);
         updatePage('deleteConnectionProfile');
+        let connection_profiles = _profiles[0];
+        for (let each in connection_profiles)
+        { (function (_idx, _arr){ $('#connection_profiles').append('<option value="'+_idx+'">' +_idx+'</option>'); })(each, connection_profiles); }
+        let first = $('#connection_profiles').find(':first').text();
+        let _str = displayProfile(connection_profiles[first],first);
+        replaceContent($('#selected_profile'), _str);
+
+        let _cancel = $('#cancel');
+        let _submit = $('#submit');
+        _cancel.on('click', function (){$('#admin-forms').empty();});
+        if (_state === 0) {_submit.on('click', function(){deleteConnectionProfile($('#connection_profiles').find(':selected').text());});}
+        else {_submit.hide();}
         $('#connection_profiles').on('change',function()
         { let name = $('#connection_profiles').find(':selected').text();
             let profile = connection_profiles[name];
             let _str = displayProfile(profile,name);
             replaceContent($('#selected_profile'), _str);
         });
-        let connection_profiles = _profiles[0];
-        for (let each in connection_profiles)
-        { (function (_idx, _arr)
-            { $('#connection_profiles').append('<option value="'+_idx+'">' +_idx+'</option>'); })(each, connection_profiles); }
-        let first = $('#connection_profiles').find(':first').text();
-        let _str = displayProfile(connection_profiles[first],first);
-        replaceContent($('#selected_profile'), _str);
-        let _cancel = $('#cancel');
-        let _submit = $('#submit');
-        _cancel.on('click', function (){$('#admin-forms').empty();});
-        if (_state === 0)
-        {_submit.on('click', function(){deleteConnectionProfile($('#connection_profiles').find(':selected').text());});}
-        else
-        {_submit.hide();}
     });
 }
 
@@ -169,9 +159,7 @@ function networkDeploy()
 
 function simpleUXUpdate(_file, _message)
 {
-    let _str = '';
-    _str +='<h2>network deploy request for '+_file+'</h2>';
-    _str += '<h4>Network deploy results: '+_message+'</h4>';
+    let _str = '<h2>network deploy request for '+_file+'</h2><h4>Network deploy results: '+_message+'</h4>';
     replaceContent($('#admin-forms'), _str);
 }
 /**
@@ -198,16 +186,12 @@ function networkStart()
  */
 function deleteConnectionProfile(_name)
 {
-    let options = {};
-    options.profileName = _name;
     if (confirm('Are you sure you want to delete the '+_name+' profile?') === true)
     {
-        $.when($.post('/composer/admin/deleteProfile', options)).done(function(_results)
+        $.when($.post('/composer/admin/deleteProfile', {profileName: _name})).done(function(_results)
         { simpleUXUpdate(networkFile, _results.profile);});
     } else
-    {
-        replaceContent($('#message'), formatMessage('request cancelled'));
-    }
+    {replaceContent($('#message'), formatMessage('request cancelled'));}
 }
 
 /**
@@ -215,11 +199,9 @@ function deleteConnectionProfile(_name)
  */
 function ping()
 {
-    let options = {}; options.businessNetwork = businessNetwork;
-    $.when($.post('/composer/admin/ping', options)).done(function (_results)
+    $.when($.post('/composer/admin/ping', {businessNetwork: businessNetwork})).done(function (_results)
     { 
-        let _str = '';
-        _str += '<h4>Ping request results: '+'</h4><table width="90%"><tr><th>Item</th><th width="65%">Value</th></tr>';
+        let _str = '<h4>Ping request results: '+'</h4><table width="90%"><tr><th>Item</th><th width="65%">Value</th></tr>';
         for (let each in _results.ping){(function(_idx, _arr){_str+='<tr><td>'+_idx+'</td><td>'+_arr[_idx]+'</td></tr>';})(each, _results.ping);}
         _str+='</table>';
         simpleUXUpdate(networkFile, _results.deploy);});
@@ -230,11 +212,9 @@ function ping()
  */
 function networkUndeploy()
 {
-    let options = {};
-    options.businessNetwork = businessNetwork;
     if (confirm('Are you sure you want to undeploy the '+businessNetwork+' business network?') === true)
     {
-        $.when($.post('/composer/admin/undeploy', options)).done(function(_results)
+        $.when($.post('/composer/admin/undeploy', {businessNetwork: businessNetwork})).done(function(_results)
         { simpleUXUpdate(businessNetwork, _results.undeploy);});
     } else
     {
@@ -247,9 +227,7 @@ function networkUndeploy()
  */
 function networkUpdate()
 {
-    let options = {};
-    options.myArchive = networkFile;
-    $.when($.post('/composer/admin/update', options)).done(function (_results)
+    $.when($.post('/composer/admin/update', {myArchive: networkFile})).done(function (_results)
     { simpleUXUpdate(networkFile, _results.update);});
 }
 
@@ -261,9 +239,7 @@ function networkUpdate()
  */
 function displayProfile(_profile, _name)
 {
-    let _str = '';
-    _str += '<h4>'+_name+'</h4>';
-    _str +='<table>';
+    let _str = '<h4>'+_name+'</h4><table>';
     for (let item in _profile)
         {(function(_item, _obj){
             switch (_item)
@@ -305,8 +281,7 @@ function displayProfile(_profile, _name)
 function preLoad()
 {
     $('#body').empty();
-    let options = {};
-    $.when($.post('/setup/autoLoad', options)).done(function (_results)
+    $.when($.post('/setup/autoLoad', {})).done(function (_results)
     { console.log('Autoload Initiated'); $('#body').append('<h2>Autoload Initiated</h2>'); });
 }
 
@@ -318,10 +293,7 @@ function listMemRegistries()
     $.when($.get('/composer/admin/getRegistries')).done(function (_results)
     {
         $('#registryName').empty();
-        let _str = '';
-        _str +='<h2>Registry List</h2>';
-        _str += '<h4>Network update results: '+_results.result+'</h4>';
-        _str += '<ul>';
+        let _str = '<h2>Registry List</h2><h4>Network update results: '+_results.result+'</h4><ul>';
         for (let each in _results.registries)
         {(function(_idx, _arr){
             _str += '<li>'+_arr[_idx]+'</li>';
@@ -340,14 +312,9 @@ function listMemRegistries()
  */
 function listRegistry()
 {
-    let options = {};
-    options.registry = $('#registryName').find(':selected').text();
-    $.when($.post('/composer/admin/getMembers', options)).done(function (_results)
+    $.when($.post('/composer/admin/getMembers', {registry: $('#registryName').find(':selected').text()})).done(function (_results)
     {
-        let _str = '';
-        _str +='<h2>Registry List</h2>';
-        _str += '<h4>Network update results: '+_results.result+'</h4>';
-        _str += '<table width="100%"><tr><th>Type</th><th>Company</th><th>email</th></tr>';
+        let _str = '<h2>Registry List</h2><h4>Network update results: '+_results.result+'</h4><table width="100%"><tr><th>Type</th><th>Company</th><th>email</th></tr>';
         for (let each in _results.members)
         {(function(_idx, _arr){
             _str += '<tr><td>'+_arr[_idx].type+'</td><td>'+_arr[_idx].companyName+'</td><td>'+_arr[_idx].id+'</td></tr>';
@@ -479,10 +446,7 @@ function createCard()
  */
 function listAssets()
 {
-    let options = {};
-    options.registry = 'Order';
-    options.type='admin';
-    $.when($.post('/composer/admin/getAssets', options)).done(function (_results)
+    $.when($.post('/composer/admin/getAssets', {registry: 'Order', type: 'admin'})).done(function (_results)
     {
         let _str = '';
         _str +='<h2>Registry List</h2>';
@@ -531,11 +495,10 @@ function removeMember()
     let options = {};
     let member_list;
     options.registry = $('#registryName2').find(':selected').text();
-    $('#admin-forms').empty();
     replaceContent($('#messages'), formatMessage('Getting Member List for '+options.registry+'.'));
     $.when($.post('/composer/admin/getMembers', options),$.get('removeMember.html')).done(function (_results, _page)
     {
-        $('#admin-forms').append(_page[0]);
+        replaceContent($('#admin-forms'), _page[0]);
         $('#member_type').append(options.registry);
         updatePage('removeMember');
         member_list = _results[0].members;
