@@ -110,26 +110,27 @@ function formatShipperOrders(_target, _orders)
 
   function getShipperDateAndTime(_element)
   {
-    let _action = '<th><select id=sh_action'+_idx+'><option value="'+textPrompts.orderProcess.NoAction.select+'">'+textPrompts.orderProcess.NoAction.message+'</option>';
+    let _action = '<th><select id=sh_action'+_idx+'>';
+    _action += createSelect(textPrompts.orderProcess.NoAction.select, textPrompts.orderProcess.NoAction.message);
     _statusText = '';
     let _date = getEventDates(_element);
     switch (JSON.parse(_element.status).code)
     {
     case orderStatus.ShipRequest.code:
-        _action += '<option value="'+textPrompts.orderProcess.Delivering.select+'">'+textPrompts.orderProcess.Delivering.message+'</option>';
+        _action += createSelect(textPrompts.orderProcess.Delivering.select, textPrompts.orderProcess.Delivering.message);
         _statusText = '<br/>'+textPrompts.orderProcess.Delivering.prompt+'<input id="delivery'+_idx+'" type="text"></input>';
         break;
     case orderStatus.Delivering.code:
-        _action += '<option value="'+textPrompts.orderProcess.Delivering.select+'">'+textPrompts.orderProcess.Delivering.message+'</option>';
-        _action += '<option value="'+textPrompts.orderProcess.Delivered.select+'">'+textPrompts.orderProcess.Delivered.message+'</option>';
+        _action += createSelect(textPrompts.orderProcess.Delivering.select, textPrompts.orderProcess.Delivering.message);
+        _action += createSelect(textPrompts.orderProcess.Delivered.select, textPrompts.orderProcess.Delivered.message);
         _statusText = '<br/>'+textPrompts.orderProcess.Delivering.prompt+'<input id="delivery'+_idx+'" type="text"></input>';
         break;
     case orderStatus.Delivered.code:
         _statusText = '<br/>'+textPrompts.orderProcess.Delivering.prompt+'<input id="delivery'+_idx+'" type="text"></input>';
         break;
     case orderStatus.Dispute.code:
-        _action += '<option value="'+textPrompts.orderProcess.Resolve.select+'">'+textPrompts.orderProcess.Resolve.message+'</option>';
-        _action += '<option value="'+textPrompts.orderProcess.Refund.select+'">'+textPrompts.orderProcess.Refund.message+'</option>';
+        _action += createSelect(textPrompts.orderProcess.Resolve.select, textPrompts.orderProcess.Resolve.message);
+        _action += createSelect(textPrompts.orderProcess.Refund.select, textPrompts.orderProcess.Refund.message);
         _statusText = '<br/>'+textPrompts.orderProcess.Delivering.prompt+'<input id="delivery'+_idx+'" type="text"></input>';
         _statusText += '<br/>'+textPrompts.orderProcess.Refund.prompt+'<input id="sh_reason'+_idx+'" type="text"></input>';
         break;

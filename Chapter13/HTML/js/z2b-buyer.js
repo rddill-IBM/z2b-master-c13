@@ -69,7 +69,7 @@ function displayOrderForm()
         $('#amount').append('$'+totalAmount+'.00');
         // build a select list for the items
         let _str = '';
-        for (let each in itemTable){(function(_idx, _arr){_str+='<option value="'+_idx+'">'+_arr[_idx].itemDescription+'</option>';})(each, itemTable);}
+        for (let each in itemTable){(function(_idx, _arr){_str+=createSelect(_idx, _arr[_idx].itemDescription);})(each, itemTable);}
         $('#items').empty();
         $('#items').append(_str);
         $('#cancelNewOrder').on('click', function (){_orderDiv.empty();});
@@ -202,39 +202,40 @@ function formatOrders(_target, _orders)
 }
 function getBuyerDateAndAction(_element, _idx)
 {
-    let _action = '<th><select id=b_action'+_idx+'><option value="'+textPrompts.orderProcess.NoAction.select+'">'+textPrompts.orderProcess.NoAction.message+'</option>';
+    let _action = '<th><select id=b_action'+_idx+'>';
+    _action += createSelect(textPrompts.orderProcess.NoAction.select, textPrompts.orderProcess.NoAction.message);
     let r_string = '</th>';
     let _date = getEventDates(_element);
     switch (JSON.parse(_element.status).code)
     {
     case orderStatus.PayRequest.code:
-        _action += '<option value="'+textPrompts.orderProcess.AuthorizePayment.select+'">'+textPrompts.orderProcess.AuthorizePayment.message+'</option>';
-        _action += '<option value="'+textPrompts.orderProcess.Dispute.select+'">'+textPrompts.orderProcess.Dispute.message+'</option>';
+        _action += createSelect(textPrompts.orderProcess.AuthorizePayment.select, textPrompts.orderProcess.AuthorizePayment.message);
+        _action += createSelect(textPrompts.orderProcess.Dispute.select, textPrompts.orderProcess.Dispute.message);
         r_string = '<br/>'+textPrompts.orderProcess.Dispute.prompt+'<input id="b_reason'+_idx+'" type="text"></input></th>';
         break;
     case orderStatus.Delivered.code:
-        _action += '<option value="'+textPrompts.orderProcess.Dispute.select+'">'+textPrompts.orderProcess.Dispute.message+'</option>';
+        _action += createSelect(textPrompts.orderProcess.Dispute.select, textPrompts.orderProcess.Dispute.message);
         r_string = '<br/>'+textPrompts.orderProcess.Dispute.prompt+'<input id="b_reason'+_idx+'" type="text"></input></th>';
         break;
     case orderStatus.Dispute.code:
-        _action += '<option value="'+textPrompts.orderProcess.Resolve.select+'">'+textPrompts.orderProcess.Resolve.message+'</option>';
+        _action += createSelect(textPrompts.orderProcess.Resolve.select, textPrompts.orderProcess.Resolve.message);
         r_string = '<br/>'+textPrompts.orderProcess.Resolve.prompt+'<input id="b_reason'+_idx+'" type="text"></input></th>';
         break;
     case orderStatus.Resolve.code:
-        _action += '<option value="'+textPrompts.orderProcess.AuthorizePayment.select+'">'+textPrompts.orderProcess.AuthorizePayment.message+'</option>';
+        _action += createSelect(textPrompts.orderProcess.AuthorizePayment.select, textPrompts.orderProcess.AuthorizePayment.message);
         break;
     case orderStatus.Created.code:
-        _action += '<option value="'+textPrompts.orderProcess.Purchase.select+'">'+textPrompts.orderProcess.Purchase.message+'</option>'
-        _action += '<option value="'+textPrompts.orderProcess.Cancel.select+'">'+textPrompts.orderProcess.Cancel.message+'</option>'
+        _action += createSelect(textPrompts.orderProcess.Purchase.select, textPrompts.orderProcess.Purchase.message)
+        _action += createSelect(textPrompts.orderProcess.Cancel.select, textPrompts.orderProcess.Cancel.message)
         break;
     case orderStatus.Backordered.code:
-        _action += '<option value="'+textPrompts.orderProcess.Cancel.select+'">'+textPrompts.orderProcess.Cancel.message+'</option>'
+        _action += createSelect(textPrompts.orderProcess.Cancel.select, textPrompts.orderProcess.Cancel.message)
         break;
     case orderStatus.Bought.code:
-        _action += '<option value="'+textPrompts.orderProcess.Cancel.select+'">'+textPrompts.orderProcess.Cancel.message+'</option>'
+        _action += createSelect(textPrompts.orderProcess.Cancel.select, textPrompts.orderProcess.Cancel.message)
         break;
     case orderStatus.Ordered.code:
-        _action += '<option value="'+textPrompts.orderProcess.Cancel.select+'">'+textPrompts.orderProcess.Cancel.message+'</option>'
+        _action += createSelect(textPrompts.orderProcess.Cancel.select, textPrompts.orderProcess.Cancel.message)
         break;
         default:
         break;

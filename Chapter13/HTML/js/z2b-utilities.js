@@ -475,3 +475,8 @@ function getEventDates(_element)
     }
     return _date;
 }
+
+function createSelect(_val, _text)
+{
+    return '<option value="'+_val+'">'+_text+'</option>'
+}

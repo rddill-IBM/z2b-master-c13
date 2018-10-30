@@ -105,23 +105,24 @@ function formatSellerOrders(_target, _orders)
 
 function getSellerDataAndAction(_element, _idx)
 {
-    let _action = '<th><select id=s_action'+_idx+'><option value="'+textPrompts.orderProcess.NoAction.select+'">'+textPrompts.orderProcess.NoAction.message+'</option>';
+    let _action = '<th><select id=s_action'+_idx+'>';
+    _action += createSelect(textPrompts.orderProcess.NoAction.select, textPrompts.orderProcess.NoAction.message);
     let _date = getEventDates(_element);
     switch (JSON.parse(_element.status).code)
     {
     case orderStatus.Bought.code:
-        _action += '<option value="'+textPrompts.orderProcess.Order.select+'">'+textPrompts.orderProcess.Order.message+'</option>';
+        _action += createSelect(textPrompts.orderProcess.Order.select,extPrompts.orderProcess.Order.message);
         break;
     case orderStatus.Delivered.code:
-        _action += '<option value="'+textPrompts.orderProcess.PayRequest.select+'">'+textPrompts.orderProcess.PayRequest.message+'</option>';
+        _action += createSelect(textPrompts.orderProcess.PayRequest.select, textPrompts.orderProcess.PayRequest.message);
         break;
     case orderStatus.Dispute.code:
-        _action += '<option value="'+textPrompts.orderProcess.Resolve.select+'">'+textPrompts.orderProcess.Resolve.message+'</option>';
-        _action += '<option value="'+textPrompts.orderProcess.Refund.select+'">'+textPrompts.orderProcess.Refund.message+'</option>';
+        _action += createSelect(textPrompts.orderProcess.Resolve.select, textPrompts.orderProcess.Resolve.message);
+        _action += createSelect(textPrompts.orderProcess.Refund.select, textPrompts.orderProcess.Refund.message);
         let _string = '<br/>'+textPrompts.orderProcess.Refund.prompt+'<input id="s_reason'+_idx+'" type="text"></input>';
         break;
     case orderStatus.Resolve.code:
-        _action += '<option value="'+textPrompts.orderProcess.PayRequest.select+'">'+textPrompts.orderProcess.PayRequest.message+'</option>';
+        _action += createSelect(textPrompts.orderProcess.PayRequest.select+'">'+textPrompts.orderProcess.PayRequest.message);
         break;
     default:
         break;
