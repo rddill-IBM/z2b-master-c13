@@ -135,6 +135,7 @@ function displayOrderForm()
  */
 function formatOrders(_target, _orders)
 {
+    let methodName = 'formatOrders';
     _target.empty();
     let _str = ''; let _date = '';
     for (let each in _orders)
