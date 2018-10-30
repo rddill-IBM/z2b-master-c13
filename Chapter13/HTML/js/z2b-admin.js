@@ -28,8 +28,8 @@ function loadAdminUX ()
     let methodName = 'loadAdminUX';
     let toLoad = 'admin.html';
     $.when($.get(toLoad)).done(function (page)
-        {$('#body').empty();
-        $('#body').append(page);
+    {
+        replaceContent($('#sadmin-forms'), page);
         updatePage('admin');
         $.when($.get('/setup/getLastRestart')).done(function(_res) { $('#lastUpdate').append(_res.timeStamp); });
         listMemRegistries();
@@ -46,8 +46,7 @@ function adminList()
         for (let each in _connection)
         {(function(_idx, _arr){_str += '<li>'+_arr[_idx]+'</li>';})(each, _connection);}
         _str+='</ul>';
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_str);
+        replaceContent($('#sadmin-forms'), _str);
     });
 }
 
@@ -58,8 +57,8 @@ function displayProfileForm ()
 {
     let toLoad = 'createConnectionProfile.html';
     $.when($.get(toLoad)).done(function (page)
-        {$('#admin-forms').empty();
-        $('#admin-forms').append(page);
+    {
+        replaceContent($('#sadmin-forms'), page);
         updatePage('createConnectionProfile');
         let _cancel = $('#cancel');
         let _submit = $('#submit');
@@ -103,8 +102,7 @@ function createConnection (_form)
         let _str = '';
         _str +='<h2>network profile creation request</h2>';
         _str += '<h4>Creation request results: '+_results.profile+'</h4>';
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_str);
+        replaceContent($('#sadmin-forms'), _str);
     });
 }
 
@@ -121,8 +119,7 @@ function getProfiles()
         _str += '<ul>';
         for (let each in _profiles) {_str += displayProfile(_profiles[each], each);}
         _str += '</ul>';
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_str);
+        replaceContent($('#sadmin-forms'), _str);
 
     });
 }
@@ -136,15 +133,13 @@ function listProfiles(_state)
 {
     $.when($.get('/composer/admin/getAllProfiles'), $.get('deleteConnectionProfile.html')).done(function (_profiles, page)
     {
-        $('#admin-forms').empty();
-        $('#admin-forms').append(page);
+        replaceContent($('#admin-forms'),page);
         updatePage('deleteConnectionProfile');
         $('#connection_profiles').on('change',function()
         { let name = $('#connection_profiles').find(':selected').text();
             let profile = connection_profiles[name];
             let _str = displayProfile(profile,name);
-            $('#selected_profile').empty();
-            $('#selected_profile').append(_str);
+            replaceContent($('#selected_profile'), _str);
         });
         let connection_profiles = _profiles[0];
         for (let each in connection_profiles)
@@ -152,8 +147,7 @@ function listProfiles(_state)
             { $('#connection_profiles').append('<option value="'+_idx+'">' +_idx+'</option>'); })(each, connection_profiles); }
         let first = $('#connection_profiles').find(':first').text();
         let _str = displayProfile(connection_profiles[first],first);
-        $('#selected_profile').empty();
-        $('#selected_profile').append(_str);
+        replaceContent($('#selected_profile'), _str);
         let _cancel = $('#cancel');
         let _submit = $('#submit');
         _cancel.on('click', function (){$('#admin-forms').empty();});
@@ -178,8 +172,7 @@ function simpleUXUpdate(_file, _message)
     let _str = '';
     _str +='<h2>network deploy request for '+_file+'</h2>';
     _str += '<h4>Network deploy results: '+_message+'</h4>';
-    $('#admin-forms').empty();
-    $('#admin-forms').append(_str);
+    replaceContent($('#admin-forms'), _str);
 }
 /**
  * install a new network
@@ -213,8 +206,7 @@ function deleteConnectionProfile(_name)
         { simpleUXUpdate(networkFile, _results.profile);});
     } else
     {
-        $('#message').empty();
-        $('#message').append('request cancelled');
+        replaceContent($('#message'), formatMessage('request cancelled'));
     }
 }
 
@@ -246,8 +238,7 @@ function networkUndeploy()
         { simpleUXUpdate(businessNetwork, _results.undeploy);});
     } else
     {
-        $('#message').empty();
-        $('#message').append('undeploy request cancelled');
+        replaceContent($('#message'), formatMessage('undeploy request cancelled'));
     }
 }
 
@@ -341,8 +332,7 @@ function listMemRegistries()
             $('#registryName5').append('<option value="'+_arr[_idx]+'">' +_arr[_idx]+'</option>');
         })(each, _results.registries);}
         _str += '</ul>';
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_str);
+        replaceContent($('#admin-forms'), _str);
     });
 }
 /**
@@ -363,8 +353,7 @@ function listRegistry()
             _str += '<tr><td>'+_arr[_idx].type+'</td><td>'+_arr[_idx].companyName+'</td><td>'+_arr[_idx].id+'</td></tr>';
         })(each, _results.members);}
         _str += '</ul>';
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_str);
+        replaceContent($('#admin-forms'), _str);
     });
 }
 /**
@@ -375,12 +364,10 @@ function checkCard()
     let options = {};
     let member_list;
     options.registry = $('#registryName3').find(':selected').text();
-    $('#admin-forms').empty();
-    $('#messages').empty();
-    $('#messages').append(formatMessage('Getting Member List for '+options.registry+'.'));
+    replaceContent($('#messages'),formatMessage('Getting Member List for '+options.registry+'.'));
     $.when($.post('/composer/admin/getMembers', options),$.get('removeMember.html')).done(function (_results, _page)
     {
-        $('#admin-forms').append(_page[0]);
+        replaceContent($('#admin-forms'), _page[0]);
         $('#member_type').append(options.registry);
         updatePage('removeMember');
         member_list = _results[0].members;
@@ -415,12 +402,10 @@ function issueIdentity()
     let options = {};
     let member_list;
     options.registry = $('#registryName4').find(':selected').text();
-    $('#admin-forms').empty();
-    $('#messages').empty();
-    $('#messages').append(formatMessage('Getting Member List for '+options.registry+'.'));
+    replaceContent($('#messages'), formatMessage('Getting Member List for '+options.registry+'.'));
     $.when($.post('/composer/admin/getMembers', options),$.get('removeMember.html')).done(function (_results, _page)
     {
-        $('#admin-forms').append(_page[0]);
+        replaceContent($('#admin-forms'), _page[0]);
         $('#member_type').append(options.registry);
         updatePage('removeMember');
         member_list = _results[0].members;
@@ -457,13 +442,11 @@ function createCard()
     let options = {};
     let member_list;
     options.registry = $('#registryName5').find(':selected').text();
-    $('#admin-forms').empty();
-    $('#messages').empty();
-    $('#messages').append(formatMessage('Getting Member List for '+options.registry+'.'));
+    replaceContent($('#messages'), formatMessage('Getting Member List for '+options.registry+'.'));
     $.when($.post('/composer/admin/getMembers', options),$.get('removeMember.html')).done(function (_results, _page)
     {
-        $('#admin-forms').append(_page[0]);
-        $('#member_type').append(options.registry);
+        replaceContent($('#admin-forms'), _page[0]);
+        replaceContent($('##member_type'), options.registry);
         updatePage('removeMember');
         member_list = _results[0].members;
         for (let each in _results[0].members)
@@ -513,8 +496,7 @@ function listAssets()
             })(each, _results.orders);}
             _str += '</ul>';
         } else {_str += '<br/>'+_results.error;}
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_str);
+        replaceContent($('#admin-forms'), _str);
     });
 }
 /**
@@ -524,13 +506,11 @@ function addMember()
 {
     $.when($.get('createMember.html')).done(function (_page)
     {
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_page);
+        replaceContent($('#admin-forms'), _page);
         updatePage('createMember');
         let _cancel = $('#cancel');
         let _submit = $('#submit');
-        $('#messages').empty();
-        $('#messages').append('<br/>Please fill in add member form.');
+        replaceContent($('#admin-forms'), '<br/>Please fill in add member form.');
         _cancel.on('click', function (){$('#admin-forms').empty();});
         _submit.on('click', function(){
             $('#messages').append('<br/>starting add member request.');
@@ -552,8 +532,7 @@ function removeMember()
     let member_list;
     options.registry = $('#registryName2').find(':selected').text();
     $('#admin-forms').empty();
-    $('#messages').empty();
-    $('#messages').append(formatMessage('Getting Member List for '+options.registry+'.'));
+    replaceContent($('#messages'), formatMessage('Getting Member List for '+options.registry+'.'));
     $.when($.post('/composer/admin/getMembers', options),$.get('removeMember.html')).done(function (_results, _page)
     {
         $('#admin-forms').append(_page[0]);
@@ -594,10 +573,8 @@ function removeMember()
 function displayMember(id, _list)
 {
     let member = findMember(id, _list);
-    $('#companyName').empty();
-    $('#companyName').append(member.companyName);
-    $('#participant_id').empty();
-    $('#participant_id').append(member.id);
+    replaceContent($('#companyName'), member.companyName);
+    replaceContent($('#participant_id'), member.id);
 }
 
 /**
@@ -627,10 +604,8 @@ function getChainInfo()
         if (_res.result === 'success')
             {_str += 'Current Hash: '+formatMessage(_res.currentHash);
             _str+= '<ul><li>High: '+_res.blockchain.height.high+'</li><li>Low: '+_res.blockchain.height.low+'</li></ul>';}
-        else
-            {_str += formatMessage(_res.message);}
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_str);
+        else {_str += formatMessage(_res.message);}
+        replaceContent($('#admin-forms'), _str);
     });
 }
 
@@ -653,13 +628,15 @@ function getHistorian()
             }
             _str +='</table>';
         }
-        else
-            {_str += formatMessage(_res.message);}
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_str);
+        else {_str += formatMessage(_res.message);}
+        replaceContent($('#admin-forms'), _str);
     });
 }
-
+function replaceContent(_target, _str)
+{
+    _target.empty();
+    _target.append(_str);
+}
 /**
  * display blockchain updates
  */
