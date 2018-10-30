@@ -133,66 +133,7 @@ exports.orderAction = function (req, res, next) {
             return assetRegistry.get(req.body.orderNo)
             .then((order) => {
                 let factory = businessNetworkConnection.getBusinessNetwork().getFactory();
-                order.status = req.body.action;
-                updateOrder = factory.newTransaction(NS, order.status);
-                updateOrder.order = factory.newRelationship(NS, 'Order', order.$identifier);
-                switch (order.status)
-                {
-                case 'Pay':
-                case 'Request Payment':
-                    updateOrder.financeCo = factory.newRelationship(NS, 'FinanceCo', financeCoID);
-                    updateOrder.seller = factory.newRelationship(NS, 'Seller', order.seller.$identifier);
-                    break;
-                case 'Dispute':
-                    updateOrder.financeCo = factory.newRelationship(NS, 'FinanceCo', financeCoID);
-                    updateOrder.buyer = factory.newRelationship(NS, 'Buyer', order.buyer.$identifier);
-                    updateOrder.seller = factory.newRelationship(NS, 'Seller', order.seller.$identifier);
-                    updateOrder.dispute = req.body.reason;
-                    break;
-                case 'Purchase':
-                case 'Cancel':
-                    updateOrder.buyer = factory.newRelationship(NS, 'Buyer', order.buyer.$identifier);
-                    updateOrder.seller = factory.newRelationship(NS, 'Seller', order.seller.$identifier);
-                    break;
-                case 'Order From Supplier':
-                    updateOrder.provider = factory.newRelationship(NS, 'Provider', req.body.provider);
-                    updateOrder.seller = factory.newRelationship(NS, 'Seller', order.seller.$identifier);
-                    break;
-                case 'Refund':
-                    updateOrder.seller = factory.newRelationship(NS, 'Seller', order.seller.$identifier);
-                    updateOrder.financeCo = factory.newRelationship(NS, 'FinanceCo', financeCoID);
-                    updateOrder.refund = req.body.reason;
-                    break;
-                case 'Resolve':
-                    updateOrder.buyer = factory.newRelationship(NS, 'Buyer', order.buyer.$identifier);
-                    updateOrder.shipper = factory.newRelationship(NS, 'Shipper', order.shipper.$identifier);
-                    updateOrder.provider = factory.newRelationship(NS, 'Provider', order.provider.$identifier);
-                    updateOrder.seller = factory.newRelationship(NS, 'Seller', order.seller.$identifier);
-                    updateOrder.financeCo = factory.newRelationship(NS, 'FinanceCo', financeCoID);
-                    updateOrder.resolve = req.body.reason;
-                    break;
-                case 'Request Shipping':
-                    updateOrder.shipper = factory.newRelationship(NS, 'Shipper', req.body.shipper);
-                    updateOrder.provider = factory.newRelationship(NS, 'Provider', order.provider.$identifier);
-                    break;
-                case 'Update Delivery Status':
-                    updateOrder.shipper = factory.newRelationship(NS, 'Shipper', req.body.participant);
-                    updateOrder.deliveryStatus = req.body.delivery;
-                    break;
-                case 'Delivered':
-                    updateOrder.shipper = factory.newRelationship(NS, 'Shipper', req.body.participant);
-                    break;
-                case 'BackOrder':
-                    updateOrder.backorder = req.body.reason;
-                    updateOrder.provider = factory.newRelationship(NS, 'Provider', order.provider.$identifier);
-                    break;
-                case 'Authorize Payment':
-                    updateOrder.buyer = factory.newRelationship(NS, 'Buyer', order.buyer.$identifier);
-                    updateOrder.financeCo = factory.newRelationship(NS, 'FinanceCo', financeCoID);
-                    break;
-                default :
-                    res.send({'result': 'failed', 'error':' order '+req.body.orderNo+' unrecognized request: '+req.body.action});
-                }
+                updateOrder = assessAction(factory, order, req.body);
                 return businessNetworkConnection.submitTransaction(updateOrder)
                 .then(() => {res.send({'result': ' order '+req.body.orderNo+' successfully updated to '+req.body.action});})
                 .catch((error) => {
@@ -209,6 +150,72 @@ exports.orderAction = function (req, res, next) {
     .catch((error) => {res.send({'result': 'failed', 'error': 'Get Asset Registry failed: '+error.message});});
 };
 
+function assessAction (_factory, _order, _body)
+{
+    let order = _order;
+    let factory = _factory;
+    order.status = _body.action;
+    updateOrder = factory.newTransaction(NS, order.status);
+    updateOrder.order = factory.newRelationship(NS, 'Order', order.$identifier);
+    switch (order.status)
+    {
+    case 'Pay':
+    case 'Request Payment':
+        updateOrder.financeCo = factory.newRelationship(NS, 'FinanceCo', financeCoID);
+        updateOrder.seller = factory.newRelationship(NS, 'Seller', order.seller.$identifier);
+        break;
+    case 'Dispute':
+        updateOrder.financeCo = factory.newRelationship(NS, 'FinanceCo', financeCoID);
+        updateOrder.buyer = factory.newRelationship(NS, 'Buyer', order.buyer.$identifier);
+        updateOrder.seller = factory.newRelationship(NS, 'Seller', order.seller.$identifier);
+        updateOrder.dispute = _body.reason;
+        break;
+    case 'Purchase':
+    case 'Cancel':
+        updateOrder.buyer = factory.newRelationship(NS, 'Buyer', order.buyer.$identifier);
+        updateOrder.seller = factory.newRelationship(NS, 'Seller', order.seller.$identifier);
+        break;
+    case 'Order From Supplier':
+        updateOrder.provider = factory.newRelationship(NS, 'Provider', _body.provider);
+        updateOrder.seller = factory.newRelationship(NS, 'Seller', order.seller.$identifier);
+        break;
+    case 'Refund':
+        updateOrder.seller = factory.newRelationship(NS, 'Seller', order.seller.$identifier);
+        updateOrder.financeCo = factory.newRelationship(NS, 'FinanceCo', financeCoID);
+        updateOrder.refund = _body.reason;
+        break;
+    case 'Resolve':
+        updateOrder.buyer = factory.newRelationship(NS, 'Buyer', order.buyer.$identifier);
+        updateOrder.shipper = factory.newRelationship(NS, 'Shipper', order.shipper.$identifier);
+        updateOrder.provider = factory.newRelationship(NS, 'Provider', order.provider.$identifier);
+        updateOrder.seller = factory.newRelationship(NS, 'Seller', order.seller.$identifier);
+        updateOrder.financeCo = factory.newRelationship(NS, 'FinanceCo', financeCoID);
+        updateOrder.resolve = _body.reason;
+        break;
+    case 'Request Shipping':
+        updateOrder.shipper = factory.newRelationship(NS, 'Shipper', _body.shipper);
+        updateOrder.provider = factory.newRelationship(NS, 'Provider', order.provider.$identifier);
+        break;
+    case 'Update Delivery Status':
+        updateOrder.shipper = factory.newRelationship(NS, 'Shipper', _body.participant);
+        updateOrder.deliveryStatus = _body.delivery;
+        break;
+    case 'Delivered':
+        updateOrder.shipper = factory.newRelationship(NS, 'Shipper', _body.participant);
+        break;
+    case 'BackOrder':
+        updateOrder.backorder = _body.reason;
+        updateOrder.provider = factory.newRelationship(NS, 'Provider', order.provider.$identifier);
+        break;
+    case 'Authorize Payment':
+        updateOrder.buyer = factory.newRelationship(NS, 'Buyer', order.buyer.$identifier);
+        updateOrder.financeCo = factory.newRelationship(NS, 'FinanceCo', financeCoID);
+        break;
+    default :
+        res.send({'result': 'failed', 'error':' order '+_body.orderNo+' unrecognized request: '+_body.action});
+    }
+
+}
 /**
  * adds an order to the blockchain
  * @param {express.req} req - the inbound request object from the client
