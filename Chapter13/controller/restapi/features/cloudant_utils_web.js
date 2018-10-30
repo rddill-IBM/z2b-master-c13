@@ -36,7 +36,6 @@ exports.w_listAllDatabases=w_listAllDatabases;
 exports.w_listAllDocuments=w_listAllDocuments;
 exports.w_capabilities=w_capabilities;
 exports.w_getMetadata=w_getMetadata;
-exports.w_buildEntryPage=w_buildEntryPage;
 exports.w_getDocs=w_getDocs;
 exports.w_getOne=w_getOne;
 exports.w_select=w_select;
@@ -314,90 +313,7 @@ function retrieveMetaData(_name)
   {if (metaData.dataModel[each].name == _name){return(metaData.dataModel[each]);}}
   return({"failed": _name+" not found"});
 }
-function w_buildEntryPage(req, res, next)
-{
-  var pageMeta = retrieveMetaData(req.body.name);
-  if (typeof(pageMeta.failed) != "undefined"){return(pageMeta)}
-  else
-  { console.log(pageMeta);
-    var _str = "<h2>"+pageMeta.name+"</h2>"+pageMeta.description+"<div class='container'><table>";
-    var _type = req.body.type;
-    var _fields = "";
-    for (each in pageMeta.elements)
-    {(function(_idx, _array){_str+="<tr><td width='25%'><span class='glyphicon glyphicon-question-sign' title='"+_array[_idx].comment+"'></span>"+_array[_idx].name+"</td><td width='75%'>";
-    if (_idx > 0){_fields +=",";}
-      switch (_array[_idx].type)
-      {
-        case 'int':
-        _str += "<input id='"+_array[_idx].name+"', type='number', width=100%, class='showfocus'></input>";
-        _fields += _array[_idx].name;
-        break;
-        case 'string':
-        _str += "<input id='"+_array[_idx].name+"', type='text', width=100%, class='showfocus'></input>";
-        _fields += _array[_idx].name;
-        break;
-        case 'boolean':
-        _str += "<input id='"+_array[_idx].name+"_true', type='radio', width=50%, class='showfocus'>True</input>";
-        _str += "<input id='"+_array[_idx].name+"_false', type='radio', width=50%, class='showfocus'>False</input>";
-        _fields += _array[_idx].name+"_true,"; _fields += _array[_idx].name+"_false";
-        break;
-        case 'email':
-        _str += "<input id='"+_array[_idx].name+"', type='email', width=100%, class='showfocus'></input>";
-        _fields += _array[_idx].name;
-        break;
-        case 'timestamp':
-        // needs routine to get timestamp
-        var _tStamp = new Date(Date.now());
-        _str += "<div id='"+_array[_idx].name+"', type='readonly', width=100%, class='showfocus'>"+_tStamp.toISOString()+"</div>";
-        _fields += _array[_idx].name;
-        break;
-        case 'JSON':
-        _str += "<input id='"+_array[_idx].name+"', type='text', width=100%, class='showfocus'></input>";
-        _fields += _array[_idx].name;
-        break;
-        case 'index':
-        _str += "<div id='"+_array[_idx].name+"', type='readonly', width=100%, class='showfocus'>Defined when inserted</div>";
-        _fields += _array[_idx].name;
-        break;
-        default:
-        _str += "<div id='"+_array[_idx].name+"', type='readonly', width=100%, class='showfocus'>"+_array[_idx].type+" is not a recognized type</div>";
-        _fields += _array[_idx].name;
-        break;
-      }
-      _str +="</td></tr>";
-    })(each, pageMeta.elements)}
-    _str += "<tr><td width='25%'><span class='glyphicon glyphicon-question-sign' title='revision number'></span>_rev</td><td width='75%'>"+"<div id='_rev', type='readonly', width=100%, class='showfocus'>Defined when inserted</div></td></tr></table>";
-    _fields += ",_rev";
-    console.log(_fields);
-    _str += "<tr><td colspan='2'><a id='autoSubmit' class='btn btn-primary' style='padding-left: 0.3em'>Insert New Document</a></td></tr></table></div> \n";
-    _str += "<script>  \n";
-    _str += "$('#autoSubmit').on('click',function(){  \n";
-    _str += "  var _input = '"+_fields+"';  \n";
-    _str += "  var fields = _input.split(',');  \n";
-    _str += "  var _type = 'insert';  \n";
-    _str += "  var data = {};  \n";
-    _str += "  switch (_type)  \n";
-    _str += "  {  \n";
-    _str += "    case 'insert' :  \n";
-    _str += "     for (each in fields)  \n";
-    _str += "     {(function(_idx,_array){if ((_array[_idx] != 'id_idx') && (_array[_idx] != '_rev')) {data[_array[_idx]] = $('#'+_array[_idx]).val();}})(each, fields)}  \n";
-    _str += "     console.log('data is: ',data); \n";
-    _str += "     var object = {}; object.name = '"+pageMeta.name+"'; \n";
-    _str += "     object.content = data; \n";
-    _str += "     $.when($.post('/db/insert', object)).done(function(_res){console.log(JSON.stringify(_res));}); \n";
-    _str += "    break;  \n";
-    _str += "    case 'update' :  \n";
-    _str += "      \n";
-    _str += "    break;  \n";
-    _str += "    default:  \n";
-    _str += "    console.log('default entered on '+_type);  \n";
-    _str += "  }  \n";
-    _str += "});  \n";
-  _str += "</script> \n";
-  console.log(_str);
-    res.send(_str);
-  }
-}
+
 function w_createBackup(req, res, next)
 {
   var _object = {};

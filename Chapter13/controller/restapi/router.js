@@ -75,7 +75,6 @@ router.post('/db/dropTable*', noSQL.w_drop);
 router.post('/db/insert*', noSQL.w_insert);
 router.post('/db/update*', noSQL.w_update);
 router.post('/db/delete*', noSQL.w_delete);
-router.post('/db/buildEntryPage*', noSQL.w_buildEntryPage);
 router.post('/db/getDocs*', noSQL.w_getDocs);
 router.post('/db/selectMulti*', noSQL.w_selectMulti);
 router.post('/db/select2*', noSQL.w_select2);
