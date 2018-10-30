@@ -8,3 +8,4 @@ exclude_patterns:
 - "Chapter13/startup/"
 - "Chapter13/HTML/fonts/"
 - "Chapter13/HTML/js-utils/"
+- "Chapter13/network/test/"
