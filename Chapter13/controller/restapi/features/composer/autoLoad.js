@@ -155,7 +155,7 @@ exports.autoLoad = function(req, res, next) {
                                 participant.companyName = _arr[_idx].companyName;
                                 participantRegistry.add(participant)
                                 .then(() => {
-                                    console.log('['+_idx+'] '+_arr[_idx].companyName+' successfully added');
+                                    console.log(methodName+' ['+_idx+'] '+_arr[_idx].companyName+' successfully added');
                                     svc.send(req.app.locals, 'Message', '['+_idx+'] '+_arr[_idx].companyName+' successfully added');
                                 })
                                 .then(() => {
@@ -163,11 +163,11 @@ exports.autoLoad = function(req, res, next) {
                                     // V0.14
                                     // return businessNetworkConnection.issueIdentity(config.composer.NS+'.'+_arr[_idx].type+'#'+_arr[_idx].id, _arr[_idx].pw)
                                     // V0.15
-                                    console.log('issuing identity for: '+config.composer.NS+'.'+_arr[_idx].type+'#'+_arr[_idx].id);
+                                    console.log(methodName+' issuing identity for: '+config.composer.NS+'.'+_arr[_idx].type+'#'+_arr[_idx].id);
                                     return businessNetworkConnection.issueIdentity(config.composer.NS+'.'+_arr[_idx].type+'#'+_arr[_idx].id, _arr[_idx].id)
                                     .then((result) => {
-                                        console.log('_arr[_idx].id: '+_arr[_idx].id);
-                                        console.log('result.userID: '+result.userID);
+                                        console.log(methodName+' _arr[_idx].id: '+_arr[_idx].id);
+                                        console.log(methodName+' result.userID: '+result.userID);
                                         let _mem = _arr[_idx];
                                         _mem.secret = result.userSecret;
                                         _mem.userID = result.userID;
@@ -210,84 +210,101 @@ exports.autoLoad = function(req, res, next) {
                                             .catch((error) => { console.log(methodName+' businessNetworkConnection.connect() failed. error: ',error); bnc.disconnect(); });
                                         })
                                         .catch((error) => {
-                                            console.error('adminConnection.importCard failed. ',error.message);
+                                            console.error(methodName+' adminConnection.importCard failed. ',error.message);
                                         });
                                     })
                                     .catch((error) => {
-                                        console.error('create id for '+_arr[_idx].id+'failed. ',error.message);
+                                        console.error(methodName+' create id for '+_arr[_idx].id+'failed. ',error.message);
                                     });
                                 })
-                            .catch((error) => {console.log(_arr[_idx].companyName+' add failed',error.message);});
+                            .catch((error) => {console.log(methodName+' '+_arr[_idx].companyName+' add failed',error.message);});
                             });
                         })
-                    .catch((error) => {console.log('error with getParticipantRegistry', error.message);});
+                    .catch((error) => {console.log(methodName+' error with getParticipantRegistry', error.message);});
                     })(each, startupFile.members);
                 }
-                // iterate through the order objects in the memberList.json file.
-                for (let each in startupFile.items){(function(_idx, _arr){itemTable.push(_arr[_idx]);})(each, startupFile.items);}
-                svc.saveItemTable(itemTable);
-                for (let each in startupFile.assets)
-                    {(function(_idx, _arr)
-                        {
-                        // each type of asset, like each member, gets it's own registry. Our application
-                        // has only one type of asset: 'Order'
-                        return businessNetworkConnection.getAssetRegistry(config.composer.NS+'.'+_arr[_idx].type)
-                        .then((assetRegistry) => {
-                            return assetRegistry.get(_arr[_idx].id)
-                            .then((_res) => {
-                                console.log('['+_idx+'] order with id: '+_arr[_idx].id+' already exists in Registry '+config.composer.NS+'.'+_arr[_idx].type);
-                                svc.send(req.app.locals, 'Message', '['+_idx+'] order with id: '+_arr[_idx].id+' already exists in Registry '+config.composer.NS+'.'+_arr[_idx].type);
-                            })
-                            .catch((error) => {
-                                // first, an Order Object is created
-                                let order = factory.newResource(config.composer.NS, _arr[_idx].type, _arr[_idx].id);
-                                order = svc.createOrderTemplate(order);
-                                let _tmp = svc.addItems(_arr[_idx], itemTable);
-                                order.items = _tmp.items;
-                                order.amount = _tmp.amount;
-                                order.orderNumber = _arr[_idx].id;
-                                // then the buy transaction is created
-                                const createNew = factory.newTransaction(config.composer.NS, 'CreateOrder');
-                                order.buyer = factory.newRelationship(config.composer.NS, 'Buyer', _arr[_idx].buyer);
-                                order.seller = factory.newRelationship(config.composer.NS, 'Seller', _arr[_idx].seller);
-                                order.provider = factory.newRelationship(config.composer.NS, 'Provider', 'noop@dummyProvider');
-                                order.shipper = factory.newRelationship(config.composer.NS, 'Shipper', 'noop@dummyShipper');
-                                order.financeCo = factory.newRelationship(config.composer.NS, 'FinanceCo', financeCoID);
-                                createNew.financeCo = factory.newRelationship(config.composer.NS, 'FinanceCo', financeCoID);
-                                createNew.order = factory.newRelationship(config.composer.NS, 'Order', order.$identifier);
-                                createNew.buyer = factory.newRelationship(config.composer.NS, 'Buyer', _arr[_idx].buyer);
-                                createNew.seller = factory.newRelationship(config.composer.NS, 'Seller', _arr[_idx].seller);
-                                createNew.amount = order.amount;
-                                // then the order is added to the asset registry.
-                                return assetRegistry.add(order)
-                                .then(() => {
-                                    // then a createOrder transaction is processed which uses the chaincode
-                                    // establish the order with it's initial transaction state.
-                                    svc.loadTransaction(req.app.locals, createNew, order.orderNumber, businessNetworkConnection);
-                                })
-                                .catch((error) => {
-                                    // in the development environment, because of how timing is set up, it is normal to
-                                    // encounter the MVCC_READ_CONFLICT error. This is a database timing error, not a
-                                    // logical transaction error.
-                                    if (error.message.search('MVCC_READ_CONFLICT') !== -1)
-                                    {console.log('AL: '+_arr[_idx].id+' retrying assetRegistry.add for: '+_arr[_idx].id);
-                                        svc.addOrder(req.app.locals, order, assetRegistry, createNew, businessNetworkConnection);
-                                    }
-                                    else {console.log('error with assetRegistry.add', error.message);}
-                                });
-                            });
-                        })
-                        .catch((error) => {console.log('error with getParticipantRegistry', error.message);});
-                    })(each, startupFile.assets);
-                }
+                setupItems(startupFile, svc, businessNetworkConnection);
             })
-        .catch((error) => {console.log('error with business network Connect', error.message);});
+        .catch((error) => {console.log(methodName+' error with business network Connect', error.message);});
         })
-        .catch((error) => {console.log('error with adminConnect', error.message);});
+        .catch((error) => {console.log(methodName+' error with adminConnect', error.message);});
         res.send({'result': 'Success'});
     })
-    .catch((error) => {console.log(methodName+' svc.connectToDB('+memberDB+', req.headers.host); failed with error: ', error);});
+    .catch((error) => {console.log(methodName+' '+methodName+' svc.connectToDB('+memberDB+', req.headers.host); failed with error: ', error);});
 };
+
+function setupItems(_startupFile, _svc, _bnc)
+{
+    let methodName= 'setupItems';
+    // iterate through the order objects in the memberList.json file.
+    for (let each in _startupFile.items){(function(_idx, _arr){itemTable.push(_arr[_idx]);})(each, _startupFile.items);}
+    _svc.saveItemTable(itemTable);
+    for (let each in _startupFile.assets)
+        {(function(_idx, _arr)
+            {
+            // each type of asset, like each member, gets it's own registry. Our application
+            // has only one type of asset: 'Order'
+            return _bnc.getAssetRegistry(config.composer.NS+'.'+_arr[_idx].type)
+            .then((assetRegistry) => {
+                return assetRegistry.get(_arr[_idx].id)
+                .then((_res) => {
+                    console.log(methodName+' ['+_idx+'] order with id: '+_arr[_idx].id+' already exists in Registry '+config.composer.NS+'.'+_arr[_idx].type);
+                    _svc.send(req.app.locals, 'Message', '['+_idx+'] order with id: '+_arr[_idx].id+' already exists in Registry '+config.composer.NS+'.'+_arr[_idx].type);
+                })
+                .catch((error) => {
+                    let cn = setupOrder(config, _arr[_idx], factory);
+                    let order = cn.order;
+                    let createNew = cn.createNew;
+
+                    // then the order is added to the asset registry.
+                    return assetRegistry.add(order)
+                    .then(() => {
+                        // then a createOrder transaction is processed which uses the chaincode
+                        // establish the order with it's initial transaction state.
+                        _svc.loadTransaction(req.app.locals, createNew, order.orderNumber, _bnc);
+                    })
+                    .catch((error) => {
+                        // in the development environment, because of how timing is set up, it is normal to
+                        // encounter the MVCC_READ_CONFLICT error. This is a database timing error, not a
+                        // logical transaction error.
+                        if (error.message.search('MVCC_READ_CONFLICT') !== -1)
+                        {console.log(methodName+' AL: '+_arr[_idx].id+' retrying assetRegistry.add for: '+_arr[_idx].id);
+                            _svc.addOrder(req.app.locals, order, assetRegistry, createNew, _bnc);
+                        }
+                        else {console.log(methodName+' error with assetRegistry.add', error.message);}
+                    });
+                });
+            })
+            .catch((error) => {console.log(methodName+' error with getParticipantRegistry', error.message);});
+        })(each, _startupFile.assets);
+    }
+}
+
+
+function setupOrder(_config, _element, _factory)
+{
+    let methodName = 'setupOrder';
+    // first, an Order Object is created
+    let order = _factory.newResource(_config.composer.NS, _element.type, _element.id);
+    order = svc.createOrderTemplate(order);
+    let _tmp = svc.addItems(_element, itemTable);
+    order.items = _tmp.items;
+    order.amount = _tmp.amount;
+    order.orderNumber = _element.id;
+    // then the buy transaction is created
+    const createNew = _factory.newTransaction(_config.composer.NS, 'CreateOrder');
+    order.buyer = _factory.newRelationship(_config.composer.NS, 'Buyer', _element.buyer);
+    order.seller = _factory.newRelationship(_config.composer.NS, 'Seller', _element.seller);
+    order.provider = _factory.newRelationship(_config.composer.NS, 'Provider', 'noop@dummyProvider');
+    order.shipper = _factory.newRelationship(_config.composer.NS, 'Shipper', 'noop@dummyShipper');
+    order.financeCo = _factory.newRelationship(_config.composer.NS, 'FinanceCo', financeCoID);
+    createNew.financeCo = _factory.newRelationship(_config.composer.NS, 'FinanceCo', financeCoID);
+    createNew.order = _factory.newRelationship(_config.composer.NS, 'Order', order.$identifier);
+    createNew.buyer = _factory.newRelationship(_config.composer.NS, 'Buyer', _element.buyer);
+    createNew.seller = _factory.newRelationship(_config.composer.NS, 'Seller', _element.seller);
+    createNew.amount = order.amount;
+    
+}
 
 /**
  * get member secret from member table. In normal production, the use would be responsible
