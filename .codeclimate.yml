@@ -1,4 +1,17 @@
-## other configuration excluded from example...
+version: "2"         # required to adjust maintainability checks
+checks:
+  file-lines:
+    config:
+      threshold: 500
+  method-complexity:
+    config:
+      threshold: 5
+  method-count:
+    config:
+      threshold: 20
+  method-lines:
+    config:
+      threshold: 75
 exclude_patterns:
 - "docs/"
 - "Composer_Docs/"
