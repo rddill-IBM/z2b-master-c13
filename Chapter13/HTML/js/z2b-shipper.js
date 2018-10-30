@@ -52,8 +52,7 @@ function formatShipperOrders(_target, _orders)
     let _str = ''; let _date = ''; let _statusText;
     for (let each in _orders)
     {(function(_idx, _arr)
-        { let _action = '<th><select id=sh_action'+_idx+'><option value="'+textPrompts.orderProcess.NoAction.select+'">'+textPrompts.orderProcess.NoAction.message+'</option>';
-        _statusText = '';
+        { 
         //
         // each order can have different states and the action that a shipper can take is directly dependent on the state of the order. 
         // this switch/case table displays selected order information based on its current status and displays selected actions, which
@@ -63,43 +62,9 @@ function formatShipperOrders(_target, _orders)
         // These are the text strings which will be displayed in the browser and are retrieved from the prompts.json file 
         // associated with the language selected by the web user.
         //
-        switch (JSON.parse(_arr[_idx].status).code)
-            {
-        case orderStatus.ShipRequest.code:
-            _date = _arr[_idx].requestShipment;
-            _action += '<option value="'+textPrompts.orderProcess.Delivering.select+'">'+textPrompts.orderProcess.Delivering.message+'</option>';
-            _statusText = '<br/>'+textPrompts.orderProcess.Delivering.prompt+'<input id="delivery'+_idx+'" type="text"></input>';
-            break;
-        case orderStatus.Delivering.code:
-            _date = _arr[_idx].delivering;
-            _action += '<option value="'+textPrompts.orderProcess.Delivering.select+'">'+textPrompts.orderProcess.Delivering.message+'</option>';
-            _action += '<option value="'+textPrompts.orderProcess.Delivered.select+'">'+textPrompts.orderProcess.Delivered.message+'</option>';
-            _statusText = '<br/>'+textPrompts.orderProcess.Delivering.prompt+'<input id="delivery'+_idx+'" type="text"></input>';
-            break;
-        case orderStatus.Delivered.code:
-            _date = _arr[_idx].delivered;
-            _statusText = '<br/>'+textPrompts.orderProcess.Delivering.prompt+'<input id="delivery'+_idx+'" type="text"></input>';
-            break;
-        case orderStatus.Dispute.code:
-            _date = _arr[_idx].disputeOpened+ '<br/>'+_arr[_idx].dispute;
-            _action += '<option value="'+textPrompts.orderProcess.Resolve.select+'">'+textPrompts.orderProcess.Resolve.message+'</option>';
-            _action += '<option value="'+textPrompts.orderProcess.Refund.select+'">'+textPrompts.orderProcess.Refund.message+'</option>';
-            _statusText = '<br/>'+textPrompts.orderProcess.Delivering.prompt+'<input id="delivery'+_idx+'" type="text"></input>';
-            _statusText += '<br/>'+textPrompts.orderProcess.Refund.prompt+'<input id="sh_reason'+_idx+'" type="text"></input>';
-            break;
-        case orderStatus.Resolve.code:
-            _date = _arr[_idx].disputeResolved + '<br/>'+_arr[_idx].resolve;
-            break;
-        case orderStatus.Cancelled.code:
-            _date = _arr[_idx].cancelled;
-            break;
-        case orderStatus.Paid.code:
-            _date = _arr[_idx].paid;
-            break;
-        default:
-            console.log('OrderStatus not processed for: '+_arr[_idx].status);
-            break;
-        }
+        let da = getShipperDataAndAction(_arr[_idx]);
+        _date = da.date;
+        _action = da.action;
         let _button = '<th><button id="sh_btn_'+_idx+'">'+textPrompts.orderProcess.ex_button+'</button></th>';
         _action += '</select>';
         console.log('shipper _action: '+_action);
@@ -141,3 +106,47 @@ function formatShipperOrders(_target, _orders)
     shipperJSON.alerts = new Array();
     toggleAlert($('#'+shipperJSON.notification), shipperJSON.alerts, shipperJSON.counter);
   }
+
+  function getShipperDateAndTime(_element)
+  {
+    let _action = '<th><select id=sh_action'+_idx+'><option value="'+textPrompts.orderProcess.NoAction.select+'">'+textPrompts.orderProcess.NoAction.message+'</option>';
+    _statusText = '';
+    switch (JSON.parse(_element.status).code)
+    {
+    case orderStatus.ShipRequest.code:
+        _date = _element.requestShipment;
+        _action += '<option value="'+textPrompts.orderProcess.Delivering.select+'">'+textPrompts.orderProcess.Delivering.message+'</option>';
+        _statusText = '<br/>'+textPrompts.orderProcess.Delivering.prompt+'<input id="delivery'+_idx+'" type="text"></input>';
+        break;
+    case orderStatus.Delivering.code:
+        _date = _element.delivering;
+        _action += '<option value="'+textPrompts.orderProcess.Delivering.select+'">'+textPrompts.orderProcess.Delivering.message+'</option>';
+        _action += '<option value="'+textPrompts.orderProcess.Delivered.select+'">'+textPrompts.orderProcess.Delivered.message+'</option>';
+        _statusText = '<br/>'+textPrompts.orderProcess.Delivering.prompt+'<input id="delivery'+_idx+'" type="text"></input>';
+        break;
+    case orderStatus.Delivered.code:
+        _date = _element.delivered;
+        _statusText = '<br/>'+textPrompts.orderProcess.Delivering.prompt+'<input id="delivery'+_idx+'" type="text"></input>';
+        break;
+    case orderStatus.Dispute.code:
+        _date = _element.disputeOpened+ '<br/>'+_element.dispute;
+        _action += '<option value="'+textPrompts.orderProcess.Resolve.select+'">'+textPrompts.orderProcess.Resolve.message+'</option>';
+        _action += '<option value="'+textPrompts.orderProcess.Refund.select+'">'+textPrompts.orderProcess.Refund.message+'</option>';
+        _statusText = '<br/>'+textPrompts.orderProcess.Delivering.prompt+'<input id="delivery'+_idx+'" type="text"></input>';
+        _statusText += '<br/>'+textPrompts.orderProcess.Refund.prompt+'<input id="sh_reason'+_idx+'" type="text"></input>';
+        break;
+    case orderStatus.Resolve.code:
+        _date = _element.disputeResolved + '<br/>'+_element.resolve;
+        break;
+    case orderStatus.Cancelled.code:
+        _date = _element.cancelled;
+        break;
+    case orderStatus.Paid.code:
+        _date = _element.paid;
+        break;
+    default:
+        console.log('OrderStatus not processed for: '+_element.status);
+        break;
+    }
+return {date: _date, action: _action};
+}

@@ -38,25 +38,6 @@ let providerJSON = {
     ml_text: 'p_no_order_msg',
     list_cbfn: formatProviderOrders
     };
-       
-/**
- * lists all orders for the selected Provider
- */
-function listProviderOrders()
-{
-    let methodName = 'listProviderOrders';
-    console.log(methodName+' entered, providers = ', providerJSON.array);
-    let options = {};
-    options.id = $('#'+providerJSON.names).find(':selected').val();
-    options.userID = options.id;
-    $.when($.post('/composer/client/getMyOrders', options)).done(function(_results)
-    {
-        console.log(_results.result);
-        console.log(_results.orders);
-        if (_results.orders.length < 1) {$('#'+providerJSON.orderDiv).empty(); $('#'+providerJSON.orderDiv).append(formatMessage(textPrompts.orderProcess[providerJSON.ml_text]+options.id));}
-        else{formatProviderOrders($('#'+providerJSON.orderDiv), _results.orders);}
-    });
-}
 
 /**
  * used by the listOrders() function
@@ -73,8 +54,7 @@ function formatProviderOrders(_target, _orders)
     let _str = ''; let _date = ''; let b_string;
     for (let each in _orders)
     {(function(_idx, _arr)
-        { let _action = '<th><select id=p_action'+_idx+'><option value="'+textPrompts.orderProcess.NoAction.select+'">'+textPrompts.orderProcess.NoAction.message+'</option>';
-        b_string = '';
+        { 
         //
         // each order can have different states and the action that a Provider can take is directly dependent on the state of the order. 
         // this switch/case table displays selected order information based on its current status and displays selected actions, which
@@ -84,46 +64,9 @@ function formatProviderOrders(_target, _orders)
         // These are the text strings which will be displayed in the browser and are retrieved from the prompts.json file 
         // associated with the language selected by the web user.
         //
-        switch (JSON.parse(_arr[_idx].status).code)
-        {
-        case orderStatus.Ordered.code:
-            _date = _arr[_idx].ordered;
-            _action += '<option value="'+textPrompts.orderProcess.RequestShipping.select+'">'+textPrompts.orderProcess.RequestShipping.message+'</option>';
-            _action += '<option value="'+textPrompts.orderProcess.BackOrder.select+'">'+textPrompts.orderProcess.BackOrder.message+'</option>';
-            b_string = '<br/>'+textPrompts.orderProcess.BackOrder.prompt+'<input id="p_reason'+_idx+'" type="text"></input>';
-            break;
-        case orderStatus.Cancelled.code:
-            _date = _arr[_idx].cancelled;
-            break;
-        case orderStatus.ShipRequest.code:
-            _date = _arr[_idx].requestShipment;
-            break;
-        case orderStatus.Backordered.code:
-            _date = _arr[_idx].dateBackordered + '<br/>'+_arr[_idx].backorder;
-            _action += '<option value="'+textPrompts.orderProcess.RequestShipping.select+'">'+textPrompts.orderProcess.RequestShipping.message+'</option>';
-            break;
-        case orderStatus.Delivered.code:
-            _date = _arr[_idx].delivered;
-            _action += '<option value="'+textPrompts.orderProcess.PayRequest.select+'">'+textPrompts.orderProcess.PayRequest.message+'</option>';
-            break;
-        case orderStatus.Delivering.code:
-            _date = _arr[_idx].delivering;
-            break;
-        case orderStatus.Resolve.code:
-            _date = _arr[_idx].disputeResolved + '<br/>'+_arr[_idx].resolve;
-            break;
-        case orderStatus.Dispute.code:
-            _date = _arr[_idx].disputeOpened + '<br/>'+_arr[_idx].dispute;
-            _action += '<option value="'+textPrompts.orderProcess.Resolve.select+'">'+textPrompts.orderProcess.Resolve.message+'</option>';
-            _action += '<option value="'+textPrompts.orderProcess.Refund.select+'">'+textPrompts.orderProcess.Refund.message+'</option>';
-            b_string += '<br/>'+textPrompts.orderProcess.Refund.prompt+'<input id="p_reason'+_idx+'" type="text"></input>';
-            break;
-        case orderStatus.Paid.code:
-            _date = _arr[_idx].paid;
-            break;
-        default:
-            break;
-        }
+        let da = getProviderDataAndAction(_arr[_idx]);
+        _date = da.date;
+        _action = da.action;
         let _button = '<th><button id="p_btn_'+_idx+'">'+textPrompts.orderProcess.ex_button+'</button></th>'
         _action += '</select>';
         if (_idx > 0) {_str += '<div class="spacer"></div>';}
@@ -163,4 +106,50 @@ function formatProviderOrders(_target, _orders)
     console.log(methodName+' entering toggleAlerts. providerJSON.alerts is: ', providerJSON.alerts);
     providerJSON.alerts = new Array();
     toggleAlert($('#'+providerJSON.notification), providerJSON.alerts, providerJSON.counter);
+}
+function getProviderDataAndAction(_element)
+{
+    let _action = '<th><select id=p_action'+_idx+'><option value="'+textPrompts.orderProcess.NoAction.select+'">'+textPrompts.orderProcess.NoAction.message+'</option>';
+    b_string = '';
+    switch (JSON.parse(_element.status).code)
+    {
+    case orderStatus.Ordered.code:
+        _date = _element.ordered;
+        _action += '<option value="'+textPrompts.orderProcess.RequestShipping.select+'">'+textPrompts.orderProcess.RequestShipping.message+'</option>';
+        _action += '<option value="'+textPrompts.orderProcess.BackOrder.select+'">'+textPrompts.orderProcess.BackOrder.message+'</option>';
+        b_string = '<br/>'+textPrompts.orderProcess.BackOrder.prompt+'<input id="p_reason'+_idx+'" type="text"></input>';
+        break;
+    case orderStatus.Cancelled.code:
+        _date = _element.cancelled;
+        break;
+    case orderStatus.ShipRequest.code:
+        _date = _element.requestShipment;
+        break;
+    case orderStatus.Backordered.code:
+        _date = _element.dateBackordered + '<br/>'+_element.backorder;
+        _action += '<option value="'+textPrompts.orderProcess.RequestShipping.select+'">'+textPrompts.orderProcess.RequestShipping.message+'</option>';
+        break;
+    case orderStatus.Delivered.code:
+        _date = _element.delivered;
+        _action += '<option value="'+textPrompts.orderProcess.PayRequest.select+'">'+textPrompts.orderProcess.PayRequest.message+'</option>';
+        break;
+    case orderStatus.Delivering.code:
+        _date = _element.delivering;
+        break;
+    case orderStatus.Resolve.code:
+        _date = _element.disputeResolved + '<br/>'+_element.resolve;
+        break;
+    case orderStatus.Dispute.code:
+        _date = _element.disputeOpened + '<br/>'+_element.dispute;
+        _action += '<option value="'+textPrompts.orderProcess.Resolve.select+'">'+textPrompts.orderProcess.Resolve.message+'</option>';
+        _action += '<option value="'+textPrompts.orderProcess.Refund.select+'">'+textPrompts.orderProcess.Refund.message+'</option>';
+        b_string += '<br/>'+textPrompts.orderProcess.Refund.prompt+'<input id="p_reason'+_idx+'" type="text"></input>';
+        break;
+    case orderStatus.Paid.code:
+        _date = _element.paid;
+        break;
+    default:
+        break;
+    }
+    return {date: _date, action: _action};
 }
