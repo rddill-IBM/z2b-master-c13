@@ -103,50 +103,25 @@ function formatSellerOrders(_target, _orders)
     toggleAlert($('#'+sellerJSON.notification), sellerJSON.alerts, sellerJSON.counter);
 }
 
-function getSellerDataAndAction(_element)
+function getSellerDataAndAction(_element, _idx)
 {
     let _action = '<th><select id=s_action'+_idx+'><option value="'+textPrompts.orderProcess.NoAction.select+'">'+textPrompts.orderProcess.NoAction.message+'</option>';
-    let _date;
+    let _date = getEventDates(_element);
     switch (JSON.parse(_element.status).code)
     {
-    case orderStatus.PayRequest.code:
-        _date = _element.paymentRequested;
-        break;
     case orderStatus.Bought.code:
-        _date = _element.bought;
         _action += '<option value="'+textPrompts.orderProcess.Order.select+'">'+textPrompts.orderProcess.Order.message+'</option>';
         break;
     case orderStatus.Delivered.code:
-        _date = _element.delivered;
         _action += '<option value="'+textPrompts.orderProcess.PayRequest.select+'">'+textPrompts.orderProcess.PayRequest.message+'</option>';
         break;
-    case orderStatus.ShipRequest.code:
-        _date = _element.requestShipment;
-        break;
-    case orderStatus.Delivering.code:
-        _date = _element.delivering;
-        break;
-    case orderStatus.Ordered.code:
-        _date = _element.ordered;
-        break;
-    case orderStatus.Backordered.code:
-        _date = _element.dateBackordered + '<br/>'+_element.backorder;
-        break;
     case orderStatus.Dispute.code:
-        _date = _element.disputeOpened + '<br/>'+_element.dispute;
         _action += '<option value="'+textPrompts.orderProcess.Resolve.select+'">'+textPrompts.orderProcess.Resolve.message+'</option>';
         _action += '<option value="'+textPrompts.orderProcess.Refund.select+'">'+textPrompts.orderProcess.Refund.message+'</option>';
         let _string = '<br/>'+textPrompts.orderProcess.Refund.prompt+'<input id="s_reason'+_idx+'" type="text"></input>';
         break;
     case orderStatus.Resolve.code:
-        _date = _element.disputeResolved + '<br/>'+_element.resolve;
         _action += '<option value="'+textPrompts.orderProcess.PayRequest.select+'">'+textPrompts.orderProcess.PayRequest.message+'</option>';
-        break;
-    case orderStatus.Cancelled.code:
-        _date = _element.cancelled;
-        break;
-    case orderStatus.Paid.code:
-        _date = _element.paid;
         break;
     default:
         break;

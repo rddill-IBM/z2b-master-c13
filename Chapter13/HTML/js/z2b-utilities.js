@@ -422,3 +422,56 @@ function listOrders(_member)
         else{_member.list_cbfn($('#'+_member.orderDiv), _results.orders);}
     });
 }
+
+function getEventDates(_element)
+{
+    let methodName = 'getEventDates';
+    switch (JSON.parse(_element.status).code)
+    {
+    case orderStatus.PayRequest.code:
+        _date = _element.paymentRequested;
+        break;
+    case orderStatus.Delivered.code:
+        _date = _element.delivered;
+        break;
+    case orderStatus.Dispute.code:
+        _date = _element.disputeOpened + '<br/>'+_element.dispute;
+        break;
+    case orderStatus.Resolve.code:
+        _date = _element.disputeResolved + '<br/>'+_element.resolve;
+        break;
+    case orderStatus.Created.code:
+        _date = _element.created;
+        break;
+    case orderStatus.Cancelled.code:
+        _date = _element.cancelled;
+        break;
+    case orderStatus.Backordered.code:
+        _date = _element.dateBackordered + '<br/>'+_element.backorder;
+        break;
+    case orderStatus.ShipRequest.code:
+        _date = _element.requestShipment;
+        break;
+    case orderStatus.Authorize.code:
+        _date = _element.approved;
+        break;
+    case orderStatus.Bought.code:
+        _date = _element.bought;
+        break;
+    case orderStatus.Delivering.code:
+        _date = _element.delivering;
+        break;
+    case orderStatus.Ordered.code:
+        _date = _element.ordered;
+        break;
+    case orderStatus.Refund.code:
+        _date = _element.orderRefunded + '<br/>'+_element.refund;
+        break;
+    case orderStatus.Paid.code:
+        _date = _element.paid;
+        break;
+    default:
+        break;
+    }
+    return _date;
+}

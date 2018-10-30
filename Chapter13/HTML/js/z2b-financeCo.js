@@ -100,7 +100,7 @@ function formatFinanceOrders(_target, _orders)
         // These are the text strings which will be displayed in the browser and are retrieved from the prompts.json file 
         // associated with the language selected by the web user.
         //
-        let da = getFinanceDataAndAction(_arr[_idx]);
+        let da = getFinanceDataAndAction(_arr[_idx], _idx);
         _date = da.date;
         _action = da.action;
         let _button = '<th><button id="f_btn_'+_idx+'">Execute</button></th>'
@@ -139,59 +139,20 @@ function formatFinanceOrders(_target, _orders)
     toggleAlert($('#financeCo_notify'), f_alerts, f_alerts.length);
 }
 
-function getFinanceDateAndAction(_element)
+function getFinanceDateAndAction(_element, _idx)
 {
     let methodName = 'getFinanceDateAcion';
     let _action = '<th><select id=f_action'+_idx+'><option value="NoAction">No Action</option>';
+    let _date = getEventDates(_element);
     switch (JSON.parse(_element.status).code)
     {
-    case orderStatus.PayRequest.code:
-        _date = _element.paymentRequested;
-        break;
-    case orderStatus.Delivered.code:
-        _date = _element.delivered;
-        break;
-    case orderStatus.Dispute.code:
-        _date = _element.disputeOpened + '<br/>'+_element.dispute;
-        break;
-    case orderStatus.Resolve.code:
-        _date = _element.disputeResolved + '<br/>'+_element.resolve;
-        break;
-    case orderStatus.Created.code:
-        _date = _element.created;
-        break;
-    case orderStatus.Cancelled.code:
-        _date = _element.cancelled;
-        break;
-    case orderStatus.Backordered.code:
-        _date = _element.dateBackordered + '<br/>'+_element.backorder;
-        break;
-    case orderStatus.ShipRequest.code:
-        _date = _element.requestShipment;
-        break;
     case orderStatus.Authorize.code:
-        _date = _element.approved;
         _action += '<option value="Pay">Pay</option>';
-        break;
-    case orderStatus.Bought.code:
-        _date = _element.bought;
-        break;
-    case orderStatus.Delivering.code:
-        _date = _element.delivering;
-        break;
-    case orderStatus.Ordered.code:
-        _date = _element.ordered;
-        break;
-    case orderStatus.Refund.code:
-        _date = _element.orderRefunded + '<br/>'+_element.refund;
-        break;
-    case orderStatus.Paid.code:
-        _date = _element.paid;
         break;
     default:
         break;
     }
-    return {date: _date, action: _action};
+    return {date: _date, action: _action, r_string: r_string};
 
 }
 /**

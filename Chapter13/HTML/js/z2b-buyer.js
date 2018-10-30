@@ -150,9 +150,10 @@ function formatOrders(_target, _orders)
         // These are the text strings which will be displayed in the browser and are retrieved from the prompts.json file
         // associated with the language selected by the web user.
         //
-        let da = getBuyerDataAndAction(_arr[_idx]);
+        let da = getBuyerDataAndAction(_arr[_idx], _idx);
         _date = da.date;
         _action = da.action;
+        let r_string = da.r_string;
         let _button = '<th><button id="b_btn_'+_idx+'">'+textPrompts.orderProcess.ex_button+'</button></th>';
         _action += '</select>';
         if (_idx > 0) {_str += '<div class="spacer"></div>';}
@@ -199,67 +200,44 @@ function formatOrders(_target, _orders)
     buyerJSON.alerts = new Array();
     toggleAlert('#'+buyerJSON.notification, buyerJSON.alerts, buyerJSON.counter);
 }
-function getBuyerDateAndAction(_element)
+function getBuyerDateAndAction(_element, _idx)
 {
     let _action = '<th><select id=b_action'+_idx+'><option value="'+textPrompts.orderProcess.NoAction.select+'">'+textPrompts.orderProcess.NoAction.message+'</option>';
-    let r_string;
-    r_string = '</th>';
+    let r_string = '</th>';
+    let _date = getEventDates(_element);
     switch (JSON.parse(_element.status).code)
     {
     case orderStatus.PayRequest.code:
-        _date = _element.paymentRequested;
         _action += '<option value="'+textPrompts.orderProcess.AuthorizePayment.select+'">'+textPrompts.orderProcess.AuthorizePayment.message+'</option>';
         _action += '<option value="'+textPrompts.orderProcess.Dispute.select+'">'+textPrompts.orderProcess.Dispute.message+'</option>';
         r_string = '<br/>'+textPrompts.orderProcess.Dispute.prompt+'<input id="b_reason'+_idx+'" type="text"></input></th>';
         break;
     case orderStatus.Delivered.code:
-        _date = _element.delivered;
         _action += '<option value="'+textPrompts.orderProcess.Dispute.select+'">'+textPrompts.orderProcess.Dispute.message+'</option>';
         r_string = '<br/>'+textPrompts.orderProcess.Dispute.prompt+'<input id="b_reason'+_idx+'" type="text"></input></th>';
         break;
     case orderStatus.Dispute.code:
-        _date = _element.disputeOpened + '<br/>'+_element.dispute;
         _action += '<option value="'+textPrompts.orderProcess.Resolve.select+'">'+textPrompts.orderProcess.Resolve.message+'</option>';
         r_string = '<br/>'+textPrompts.orderProcess.Resolve.prompt+'<input id="b_reason'+_idx+'" type="text"></input></th>';
         break;
     case orderStatus.Resolve.code:
-        _date = _element.disputeResolved + '<br/>'+_element.resolve;
         _action += '<option value="'+textPrompts.orderProcess.AuthorizePayment.select+'">'+textPrompts.orderProcess.AuthorizePayment.message+'</option>';
         break;
     case orderStatus.Created.code:
-        _date = _element.created;
         _action += '<option value="'+textPrompts.orderProcess.Purchase.select+'">'+textPrompts.orderProcess.Purchase.message+'</option>'
         _action += '<option value="'+textPrompts.orderProcess.Cancel.select+'">'+textPrompts.orderProcess.Cancel.message+'</option>'
         break;
     case orderStatus.Backordered.code:
-        _date = _element.dateBackordered + '<br/>'+_element.backorder;
         _action += '<option value="'+textPrompts.orderProcess.Cancel.select+'">'+textPrompts.orderProcess.Cancel.message+'</option>'
-        break;
-    case orderStatus.ShipRequest.code:
-        _date = _element.requestShipment;
-        break;
-    case orderStatus.Authorize.code:
-        _date = _element.approved;
         break;
     case orderStatus.Bought.code:
-        _date = _element.bought;
         _action += '<option value="'+textPrompts.orderProcess.Cancel.select+'">'+textPrompts.orderProcess.Cancel.message+'</option>'
-        break;
-    case orderStatus.Delivering.code:
-        _date = _element.delivering;
         break;
     case orderStatus.Ordered.code:
-        _date = _element.ordered;
         _action += '<option value="'+textPrompts.orderProcess.Cancel.select+'">'+textPrompts.orderProcess.Cancel.message+'</option>'
         break;
-    case orderStatus.Cancelled.code:
-        _date = _element.cancelled;
-        break;
-    case orderStatus.Paid.code:
-        _date = _element.paid;
-        break;
-    default:
+        default:
         break;
     }
-    return {date: _date, action: _action};
+    return {date: _date, action: _action, r_string: r_string};
 }
