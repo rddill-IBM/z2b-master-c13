@@ -20,7 +20,6 @@ var format = require('date-format');
 
 var multi_lingual = require('./features/multi_lingual');
 var resources = require('./features/resources');
-var getCreds = require('./features/getCredentials');
 var hlcAdmin = require('./features/composer/hlcAdmin');
 var hlcClient = require('./features/composer/hlcClient');
 var setup = require('./features/composer/autoLoad');
@@ -89,8 +88,6 @@ router.post('/api/selectedPrompts*',multi_lingual.prompts);
 
 router.get('/resources/getDocs*',resources.getDocs);
 router.get('/resources/getEducation*',resources.getEducation);
-
-router.get('/getCreds*', getCreds.getServiceCreds);
 
 router.get('/composer/admin/connect*', hlcAdmin.adminConnect);
 router.get('/composer/admin/getCreds*', hlcAdmin.getCreds);
