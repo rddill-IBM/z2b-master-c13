@@ -169,31 +169,25 @@ function listProfiles(_state)
  */
 function networkDeploy()
 {
-    let options = {};
-    options.myArchive = networkFile;
-    $.when($.post('/composer/admin/deploy', options)).done(function (_results)
-    { let _str = '';
-        _str +='<h2>network deploy request for '+networkFile+'</h2>';
-        _str += '<h4>Network deploy results: '+_results.deploy+'</h4>';
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_str);
-    });
+    $.when($.post('/composer/admin/deploy', {"myArchive": networkFile})).done(function (_results)
+    { simpleUXUpdate(networkFile, _results.deploy);});
 }
 
+function simpleUXUpdate(_file, _message)
+{
+    let _str = '';
+    _str +='<h2>network deploy request for '+_file+'</h2>';
+    _str += '<h4>Network deploy results: '+_message+'</h4>';
+    $('#admin-forms').empty();
+    $('#admin-forms').append(_str);
+}
 /**
  * install a new network
  */
 function networkInstall()
 {
-    let options = {};
-    options.myArchive = networkFile;
-    $.when($.post('/composer/admin/install', options)).done(function (_results)
-    { let _str = '';
-        _str +='<h2>network install request for '+networkFile+'</h2>';
-        _str += '<h4>Network install results: '+_results.install+'</h4>';
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_str);
-    });
+    $.when($.post('/composer/admin/install', {"myArchive": networkFile})).done(function (_results)
+    { simpleUXUpdate(networkFile, _results.install);});
 }
 
 /**
@@ -201,15 +195,8 @@ function networkInstall()
  */
 function networkStart()
 {
-    let options = {};
-    options.myArchive = networkName;
-    $.when($.post('/composer/admin/start', options)).done(function (_results)
-    { let _str = '';
-        _str +='<h2>network start request for '+networkName+'</h2>';
-        _str += '<h4>Network start results: '+_results.start+'</h4>';
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_str);
-    });
+    $.when($.post('/composer/admin/start', {"myArchive": networkFile})).done(function (_results)
+    { simpleUXUpdate(networkFile, _results.start);});
 }
 
 /**
@@ -223,13 +210,7 @@ function deleteConnectionProfile(_name)
     if (confirm('Are you sure you want to delete the '+_name+' profile?') === true)
     {
         $.when($.post('/composer/admin/deleteProfile', options)).done(function(_results)
-        {
-            let _str = '';
-            _str +='<h2>network profile delete request for '+_name+'</h2>';
-            _str += '<h4>Profile delete request results: '+_results.profile+'</h4>';
-            $('#admin-forms').empty();
-            $('#admin-forms').append(_str);
-        });
+        { simpleUXUpdate(networkFile, _results.profile);});
     } else
     {
         $('#message').empty();
@@ -244,15 +225,12 @@ function ping()
 {
     let options = {}; options.businessNetwork = businessNetwork;
     $.when($.post('/composer/admin/ping', options)).done(function (_results)
-    {
+    { 
         let _str = '';
-        _str +='<h2>network ping request to '+businessNetwork+'</h2>';
         _str += '<h4>Ping request results: '+'</h4><table width="90%"><tr><th>Item</th><th width="65%">Value</th></tr>';
         for (let each in _results.ping){(function(_idx, _arr){_str+='<tr><td>'+_idx+'</td><td>'+_arr[_idx]+'</td></tr>';})(each, _results.ping);}
         _str+='</table>';
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_str);
-    });
+        simpleUXUpdate(networkFile, _results.deploy);});
 }
 
 /**
@@ -265,13 +243,7 @@ function networkUndeploy()
     if (confirm('Are you sure you want to undeploy the '+businessNetwork+' business network?') === true)
     {
         $.when($.post('/composer/admin/undeploy', options)).done(function(_results)
-        {
-            let _str = '';
-            _str +='<h2>Network undeploy request for '+businessNetwork+'</h2>';
-            _str += '<h4>Network Undeploy request results: '+_results.undeploy+'</h4>';
-            $('#admin-forms').empty();
-            $('#admin-forms').append(_str);
-        });
+        { simpleUXUpdate(businessNetwork, _results.undeploy);});
     } else
     {
         $('#message').empty();
@@ -287,12 +259,7 @@ function networkUpdate()
     let options = {};
     options.myArchive = networkFile;
     $.when($.post('/composer/admin/update', options)).done(function (_results)
-    { let _str = '';
-        _str +='<h2>network update request for '+networkFile+'</h2>';
-        _str += '<h4>Network update results: '+_results.update+'</h4>';
-        $('#admin-forms').empty();
-        $('#admin-forms').append(_str);
-    });
+    { simpleUXUpdate(networkFile, _results.update);});
 }
 
 /**
