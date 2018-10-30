@@ -161,9 +161,14 @@ let  Z2Blockchain  = {
  * @param {businessNetworkConnection} _bnc - business network connection to use
  * @returns {promise} promise
  */
-    addOrder: function (_con, _order, _registry, _createNew, _bnc)
+    addOrder: function (_el)
     {
         let methodName = 'addOrder';
+        let _con = _el.locals;
+        let _order = _el.order;
+        let _registry = _el.registry;
+        let _createNew = _el.cn;
+        let  _bnc = _el.bnc;
         return _registry.add(_order)
         .then(() => {
             this.loadTransaction(_con, _createNew, _order.orderNumber, _bnc);
@@ -171,7 +176,7 @@ let  Z2Blockchain  = {
         .catch((error) => {
             if (error.message.search('MVCC_READ_CONFLICT') !== -1)
             {console.log(_order.orderNumber+' addOrder retrying assetRegistry.add for: '+_order.orderNumber);
-                this.addOrder(_con, _order, _registry, _createNew, _bnc);
+            this.addOrder({locals: _con, order: _order, registry: _registry, cn: _createNew, bnc: _bnc});
             }
             else {console.log(methodName+' error with assetRegistry.add', error);}
         });

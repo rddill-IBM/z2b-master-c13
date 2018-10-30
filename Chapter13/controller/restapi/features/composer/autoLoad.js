@@ -268,7 +268,7 @@ function setupItems(_el)
                     let cn = setupOrder(config, _arr[_idx], _factory);
                     let order = cn.order;
                     let createNew = cn.createNew;
-                    _svc.addOrder(req.app.locals, order, assetRegistry, createNew, _bnc);
+                    _svc.addOrder({locals: req.app.locals, order: order, registry: assetRegistry, cn: createNew, bnc: _bnc});
                 });
             })
             .catch((error) => {console.log(methodName+' error with getParticipantRegistry', error.message);});
