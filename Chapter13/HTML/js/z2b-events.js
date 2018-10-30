@@ -70,14 +70,17 @@ function memberLoad ()
     $.when($.post('/composer/admin/getMembers', options), $.post('/composer/admin/getMembers', options2),
         $.post('/composer/admin/getMembers', options3), $.post('/composer/admin/getMembers', options4)).done(function (_sellers, _buyers, _providers, _shippers)
         {
-        buyerJSON.array = dropDummy(_buyers[0].members);
-        sellerJSON.array = dropDummy(_sellers[0].members);
-        providerJSON.array = dropDummy(_providers[0].members);
-        shipperJSON.array = dropDummy(_shippers[0].members);
-        sellerJSON.options= _getMembers(sellerJSON.array);
-        providerJSON.options = _getMembers(providerJSON.array);
-        shipperJSON.options = _getMembers(shipperJSON.array);
-        buyerJSON.options = _getMembers(buyerJSON.array);
+            console.log(methodName+' post completed, dropping dummy entries');
+            buyerJSON.array = dropDummy(_buyers[0].members);
+            sellerJSON.array = dropDummy(_sellers[0].members);
+            providerJSON.array = dropDummy(_providers[0].members);
+            shipperJSON.array = dropDummy(_shippers[0].members);
+            console.log(methodName+' post completed, setting option entries');
+            sellerJSON.options= _getMembers(sellerJSON.array);
+            providerJSON.options = _getMembers(providerJSON.array);
+            shipperJSON.options = _getMembers(shipperJSON.array);
+            buyerJSON.options = _getMembers(buyerJSON.array);
+            console.log(methodName+' post completed, processing complete');
         });
 }
 /**
@@ -110,13 +113,17 @@ function deferredMemberLoad()
     $.when($.post('/composer/admin/getMembers', options), $.post('/composer/admin/getMembers', options2),
         $.post('/composer/admin/getMembers', options3), $.post('/composer/admin/getMembers', options4)).done(function (_sellers, _buyers, _providers, _shippers)
         {
+            console.log(methodName+' post completed, dropping dummy entries');
             buyerJSON.array = dropDummy(_buyers[0].members);
             sellerJSON.array = dropDummy(_sellers[0].members);
             providerJSON.array = dropDummy(_providers[0].members);
             shipperJSON.array = dropDummy(_shippers[0].members);
+            console.log(methodName+' post completed, setting option entries');
             sellerJSON.options= _getMembers(sellerJSON.array);
             providerJSON.options = _getMembers(providerJSON.array);
             shipperJSON.options = _getMembers(shipperJSON.array);
+            buyerJSON.options = _getMembers(buyerJSON.array);
+            console.log(methodName+' post completed, processing complete');
             d_prompts.resolve();
         }).fail(d_prompts.reject);
     return d_prompts.promise();
@@ -250,13 +257,12 @@ function wsConnect()
     if (host_address.slice(0,9) === 'localhost') { wsSocket = new WebSocket('ws://'+host_address); }
     else { wsSocket = new WebSocket('wss://'+host_address); }
     wsSocket.onerror = function (error) {console.log('WebSocket error on wsSocket: ', error);};
-    wsSocket.onopen = function () {  wsSocket.send('connected to client');};
+    wsSocket.onopen = function () {wsSocket.send('connected to client');};
     wsSocket.onmessage = function (message)
     {
-        let incoming
-        incoming = message.data;
+        let incoming ; 
         // console.log(method+ ' incoming is: '+incoming);
-        while (incoming instanceof Object === false){incoming = JSON.parse(incoming);}
+        if ( message.data instanceof Object === false){incoming = JSON.parse(message.data);}
         switch (incoming.type)
         {
         case 'Message':
@@ -275,7 +281,7 @@ function wsConnect()
             }
             break;
         default:
-            console.log('Can Not Process message type: ',incoming.type);
+            console.log(methodName+' Can Not Process message type: ',incoming.type);
         }
     };
 }

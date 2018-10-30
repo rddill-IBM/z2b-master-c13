@@ -335,7 +335,8 @@ exports.getRegistries = function(req, res, next)
  */
 exports.getMembers = function(req, res, next) {
     // connect to the network
-    // let method = 'getMembers';
+    let methodName = 'getMembers';
+    console.log(methodName+' entered.');
     let allMembers = new Array();
     let businessNetworkConnection;
     businessNetworkConnection = new BusinessNetworkConnection();
@@ -344,10 +345,13 @@ exports.getMembers = function(req, res, next) {
     // connection in v0.15
     return businessNetworkConnection.connect(config.composer.adminCard)
         .then(() => {
+            console.log(methodName+' businessNetworkConnection.connect(config.composer.adminCard).');
             return businessNetworkConnection.getParticipantRegistry(NS+'.'+req.body.registry)
             .then(function(registry){
+                console.log(methodName+' businessNetworkConnection.getParticipantRegistry(NS+"."'+req.body.registry+').');
                 return registry.getAll()
                 .then ((members) => {
+                    console.log(methodName+' registry.getAll() entered.');
                     for (let each in members)
                         { (function (_idx, _arr)
                             { let _jsn = {};

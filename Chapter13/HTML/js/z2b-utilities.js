@@ -299,15 +299,12 @@ function formatMessage(_msg) {return '<p class="message">'+_msg+'</p>';}
  */
 function accOff(target)
 {
-    let thisElement = $(target);
-    let childNodes = thisElement.children();
+    let childNodes = $(target).children();
     for (let each in childNodes)
-    {let node = '#'+childNodes[each].id;
-        if (node !== '#')
-        {
-            if($(node).hasClass('on')) {$(node).removeClass('on');}
-            $(node).addClass('off');
-        }
+    {
+        let node = '#'+childNodes[each].id;
+        if ((node !== '#') && $(node).hasClass('on')) {$(node).removeClass('on');}
+        if ((node !== '#') && !$(node).hasClass('off')) {$(node).addClass('off');}
     }
 }
 

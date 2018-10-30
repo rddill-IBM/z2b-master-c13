@@ -585,50 +585,6 @@ function removeMember()
 
 }
 
-/**
- * retrieve member secret
- */
-function getSecret()
-{
-    let options = {};
-    let member_list;
-    options.registry = $('#registryName3').find(':selected').text();
-    $('#admin-forms').empty();
-    $('#messages').empty();
-    $('#messages').append('<br/>Getting Member List for '+options.registry+'.');
-    $.when($.post('/composer/admin/getMembers', options),$.get('getMemberSecret.html')).done(function (_results, _page)
-    {
-        $('#admin-forms').append(_page[0]);
-        updatePage('getMemberSecret');
-        $('#member_type').append(options.registry);
-        member_list = _results[0].members;
-        for (let each in _results[0].members)
-        {(function(_idx, _arr){
-            $('#member_list').append('<option value="'+_arr[_idx].id+'">' +_arr[_idx].id+'</option>');
-        })(each, _results[0].members)
-        }
-        let first = $('#member_list').find(':first').text();
-        displayMember(first, member_list);
-        let _cancel = $('#cancel');
-        let _submit = $('#submit');
-        _cancel.on('click', function (){$('#admin-forms').empty();});
-        _submit.on('click', function(){
-            options.id = $('#member_list').find(':selected').text();
-            $('#messages').append(formatMessage('getting member secret.'));
-            $.when($.post('/composer/admin/getSecret', options)).done(function (_results)
-                {
-                $('#secret').empty(); $('#secret').append(_results.secret);
-                $('#userID').empty(); $('#userID').append(_results.userID);
-                $('#messages').append(formatMessage(_results));
-            });
-        });
-        $('#member_list').on('change',function()
-        { let id = $('#member_list').find(':selected').text();
-        displayMember(id, member_list);
-        });
-    });
-
-}
 
 /**
  * display member information using the provided id and table

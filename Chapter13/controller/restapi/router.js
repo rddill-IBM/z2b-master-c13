@@ -111,7 +111,6 @@ router.post('/composer/admin/getMembers*', hlcAdmin.getMembers);
 router.post('/composer/admin/getAssets*', hlcAdmin.getAssets);
 router.post('/composer/admin/addMember*', hlcAdmin.addMember);
 router.post('/composer/admin/removeMember*', hlcAdmin.removeMember);
-router.post('/composer/admin/getSecret*', setup.getMemberSecret);
 router.post('/composer/admin/checkCard*', hlcAdmin.checkCard);
 router.post('/composer/admin/createCard*', hlcAdmin.createCard);
 router.post('/composer/admin/issueIdentity*', hlcAdmin.issueIdentity);

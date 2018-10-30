@@ -78,6 +78,7 @@ exports.getLastRestart = function( req, res, next)
  */
 exports.autoLoad = function(req, res, next) {
     let methodName = 'autoLoad';
+    console.log(methodName+' entered.');
     // connect to the member table
     svc.connectToDB(memberDB, req.headers.host)
     .then((_conn_res) => {
@@ -108,6 +109,9 @@ exports.autoLoad = function(req, res, next) {
                 // first add the member to the network, then create an identity for
                 // them. This generates the memberList.txt file later used for
                 // retrieving member secrets.
+                console.log(methodName+' =========================== ');
+                console.log(methodName+' getting members from startupFile: '+startupFile.members.length);
+                console.log(methodName+' =========================== ');
                 for (let each in startupFile.members)
                     {(function(_idx, _arr)
                         {
@@ -118,9 +122,10 @@ exports.autoLoad = function(req, res, next) {
                         .then(function(participantRegistry){
                             return participantRegistry.get(_arr[_idx].id)
                             .then((_res) => {
+                                console.log(methodName+' =========================== ['+_idx+'] '+_arr[_idx].id);
                                 svc.getThisMember(req.app.locals, memberDB, _arr[_idx].id, req.headers.host)
                                 .then((_res) => {
-                                    console.log(methodName+' svc.getThisMember('+_arr[_idx].id+') _res: ', _res);
+                                    // console.log(methodName+' svc.getThisMember('+_arr[_idx].id+') _res: ', _res);
                                     let member = JSON.parse(_res);
                                     let options = {};
                                     options.registry = member.type;
@@ -130,7 +135,7 @@ exports.autoLoad = function(req, res, next) {
                                     _meta.businessNetwork = config.composer.network;
                                     _meta.userName = member.id;
                                     _meta.enrollmentSecret = member.secret;
-                                    console.log(methodName+' svc.getThisMember('+_arr[_idx].id+') _meta: ', _meta);
+                                    //console.log(methodName+' svc.getThisMember('+_arr[_idx].id+') _meta: ', _meta);
                                     let tempCard = new hlc_idCard(_meta, admin_connection);
                                     return adminConnection.importCard(member.id, tempCard)
                                     .then(() => {
@@ -138,7 +143,7 @@ exports.autoLoad = function(req, res, next) {
                                         fs.mkdirSync(currentMemberPath);
                                         for (let i=0; i<3; i++)
                                         {(function(_idx)
-                                            {console.log(methodName+' looping on ['+_idx+'] is: '+member[CLIENT_DATA+_idx].name);
+                                            {console.log(methodName+' getThisMember looping on ['+_idx+'] is: '+member[CLIENT_DATA+_idx].name);
                                             let _path = path.join(basePath,member.id,member[CLIENT_DATA+_idx].name);
                                             fs.writeFileSync(_path, member[CLIENT_DATA+_idx].file);
                                             })(i)
@@ -166,7 +171,7 @@ exports.autoLoad = function(req, res, next) {
                                     console.log(methodName+' issuing identity for: '+config.composer.NS+'.'+_arr[_idx].type+'#'+_arr[_idx].id);
                                     return businessNetworkConnection.issueIdentity(config.composer.NS+'.'+_arr[_idx].type+'#'+_arr[_idx].id, _arr[_idx].id)
                                     .then((result) => {
-                                        console.log(methodName+' _arr[_idx].id: '+_arr[_idx].id);
+                                        console.log(methodName+' _arr['+_idx+'].id: '+_arr[_idx].id);
                                         console.log(methodName+' result.userID: '+result.userID);
                                         let _mem = _arr[_idx];
                                         _mem.secret = result.userSecret;
@@ -198,7 +203,7 @@ exports.autoLoad = function(req, res, next) {
                                                     let fileList = fs.readdirSync(currentMemberPath);
                                                     for (each in fileList)
                                                     {(function(_each, _files)
-                                                        {console.log(methodName+' looping on _files['+_each+'] is: '+_files[_each]);
+                                                        {console.log(methodName+' issueIdentity looping on _files['+_each+'] is: '+_files[_each]);
                                                         let _path = path.join(basePath,result.userID,_files[_each]);
                                                         let _file=fs.readFileSync(_path, 'utf8');
                                                         _mem[CLIENT_DATA+_each]={'name': _files[_each], 'file': _file};})(each, fileList)
@@ -223,7 +228,7 @@ exports.autoLoad = function(req, res, next) {
                     .catch((error) => {console.log(methodName+' error with getParticipantRegistry', error.message);});
                     })(each, startupFile.members);
                 }
-                setupItems(startupFile, svc, businessNetworkConnection);
+                setupItems({s_file: startupFile, svc: svc, bnc: businessNetworkConnection, f: factory, r: req});
             })
         .catch((error) => {console.log(methodName+' error with business network Connect', error.message);});
         })
@@ -233,15 +238,23 @@ exports.autoLoad = function(req, res, next) {
     .catch((error) => {console.log(methodName+' '+methodName+' svc.connectToDB('+memberDB+', req.headers.host); failed with error: ', error);});
 };
 
-function setupItems(_startupFile, _svc, _bnc)
+function setupItems(_el)
 {
     let methodName= 'setupItems';
+    console.log(methodName+' entered.');
+    let _startupFile = _el.s_file;
+    let _svc = _el.svc;
+    let _bnc = _el.bnc;
+    let _factory = _el.f;
+    let req = _el.r;
     // iterate through the order objects in the memberList.json file.
     for (let each in _startupFile.items){(function(_idx, _arr){itemTable.push(_arr[_idx]);})(each, _startupFile.items);}
     _svc.saveItemTable(itemTable);
+    console.log(methodName+' _startupFile.assets.length: '+_startupFile.assets.length);
     for (let each in _startupFile.assets)
         {(function(_idx, _arr)
             {
+                console.log(methodName+' ['+_idx+']');
             // each type of asset, like each member, gets it's own registry. Our application
             // has only one type of asset: 'Order'
             return _bnc.getAssetRegistry(config.composer.NS+'.'+_arr[_idx].type)
@@ -252,27 +265,10 @@ function setupItems(_startupFile, _svc, _bnc)
                     _svc.send(req.app.locals, 'Message', '['+_idx+'] order with id: '+_arr[_idx].id+' already exists in Registry '+config.composer.NS+'.'+_arr[_idx].type);
                 })
                 .catch((error) => {
-                    let cn = setupOrder(config, _arr[_idx], factory);
+                    let cn = setupOrder(config, _arr[_idx], _factory);
                     let order = cn.order;
                     let createNew = cn.createNew;
-
-                    // then the order is added to the asset registry.
-                    return assetRegistry.add(order)
-                    .then(() => {
-                        // then a createOrder transaction is processed which uses the chaincode
-                        // establish the order with it's initial transaction state.
-                        _svc.loadTransaction(req.app.locals, createNew, order.orderNumber, _bnc);
-                    })
-                    .catch((error) => {
-                        // in the development environment, because of how timing is set up, it is normal to
-                        // encounter the MVCC_READ_CONFLICT error. This is a database timing error, not a
-                        // logical transaction error.
-                        if (error.message.search('MVCC_READ_CONFLICT') !== -1)
-                        {console.log(methodName+' AL: '+_arr[_idx].id+' retrying assetRegistry.add for: '+_arr[_idx].id);
-                            _svc.addOrder(req.app.locals, order, assetRegistry, createNew, _bnc);
-                        }
-                        else {console.log(methodName+' error with assetRegistry.add', error.message);}
-                    });
+                    _svc.addOrder(req.app.locals, order, assetRegistry, createNew, _bnc);
                 });
             })
             .catch((error) => {console.log(methodName+' error with getParticipantRegistry', error.message);});
@@ -284,9 +280,9 @@ function setupItems(_startupFile, _svc, _bnc)
 function setupOrder(_config, _element, _factory)
 {
     let methodName = 'setupOrder';
+    console.log(methodName+' entered with _element: ', _element);
     // first, an Order Object is created
-    let order = _factory.newResource(_config.composer.NS, _element.type, _element.id);
-    order = svc.createOrderTemplate(order);
+    let order = svc.createOrderTemplate(_factory.newResource(_config.composer.NS, _element.type, _element.id));
     let _tmp = svc.addItems(_element, itemTable);
     order.items = _tmp.items;
     order.amount = _tmp.amount;
@@ -303,27 +299,5 @@ function setupOrder(_config, _element, _factory)
     createNew.buyer = _factory.newRelationship(_config.composer.NS, 'Buyer', _element.buyer);
     createNew.seller = _factory.newRelationship(_config.composer.NS, 'Seller', _element.seller);
     createNew.amount = order.amount;
-    
+    return {order: order, createNew: createNew};
 }
-
-/**
- * get member secret from member table. In normal production, the use would be responsible
- * for knowing their member secret. Because this is a demo, we're managing that informaiton
- * on the server and this routine gets that information for us so that we can successfully
- * execute transactions.
- * @param {express.req} req - the inbound request object from the client
- *  req.body.id - the id of the member to find
- * @param {express.res} res - the outbound response object for communicating back to client
- * @param {express.next} next - an express service to enable post processing prior to responding to the client
- * returns an array of assets
- * @function
- */
-exports.getMemberSecret = function(req, res, next)
-{
-    let newFile = path.join(path.dirname(require.main.filename),'startup','memberList.txt');
-    let _table = JSON.parse(fs.readFileSync(newFile));
-    let bFound = false;
-    for (let each in _table.members)
-        { if (_table.members[each].id === req.body.id) {res.send(_table.members[each]); bFound = true;}}
-    if (!bFound) {res.send({'id': req.body.id, 'secret': 'not found'});}
-};

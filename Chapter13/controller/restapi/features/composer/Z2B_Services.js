@@ -145,8 +145,9 @@ let  Z2Blockchain  = {
         })
         .catch((error) => {
             if (error.message.search('MVCC_READ_CONFLICT') !== -1)
-                {sleep.sleep(5);
-                console.log(_id+' loadTransaction retrying submit transaction for: '+_id);
+                {
+                console.log(_id+' loadTransaction waiting 5 Sec retrying submit transaction for: '+_id);
+                sleep.sleep(5);
                 this.loadTransaction(_con, _item, _id, businessNetworkConnection);
             }
         });
