@@ -38,7 +38,7 @@ let buyerJSON = {
     list_cbfn: formatOrders
 };
 
-let _orderDiv='orderDiv';
+let _orderDiv;
 let itemTable = {};
 let newItems = [];
 let totalAmount = 0;
@@ -54,7 +54,7 @@ function displayOrderForm()
     $.when($.get(toLoad), $.get('/composer/client/getItemTable')).done(function (page, _items)
     {
         itemTable = _items[0].items;
-        _orderDiv = $('#'+_orderDiv);
+        _orderDiv = $('#'+buyerJSON.orderDiv);
         _orderDiv.empty();
         _orderDiv.append(page[0]);
         // update the page with the appropriate text for the selected language
